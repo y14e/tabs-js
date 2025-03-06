@@ -1,6 +1,5 @@
 type TabsOptions = {
-  autoActivation: boolean;
-  avoidDuplicates: boolean;
+  manual: boolean;
   selector: {
     list: string;
     tab: string;
@@ -32,8 +31,7 @@ class Tabs {
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
     this.root = root;
     this.defaults = {
-      autoActivation: true,
-      avoidDuplicates: false,
+      manual: false,
       selector: {
         list: '[role="tablist"]',
         tab: '[role="tab"]',
@@ -69,10 +67,7 @@ class Tabs {
   }
 
   private initialize(): void {
-    this.lists.forEach((list, i) => {
-      if (this.settings.avoidDuplicates && i > 0) list.setAttribute('aria-hidden', 'true');
-      list.addEventListener('keydown', event => this.handleKeyDown(event));
-    });
+    this.lists.forEach(list => list.addEventListener('keydown', event => this.handleKeyDown(event)));
     this.tabs.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       if (i < this.panels.length) {
@@ -148,7 +143,7 @@ class Tabs {
     }
     const tab = focusables[newIndex] as HTMLElement;
     tab.focus();
-    if (this.settings.autoActivation) tab.click();
+    if (!this.settings.manual) tab.click();
   }
 
   private handleClick(event: MouseEvent): void {
