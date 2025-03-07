@@ -203,7 +203,7 @@ class Tabs {
         let opacity = !panel.hasAttribute('hidden') ? '0' : window.getComputedStyle(panel).getPropertyValue('opacity');
         let animation = this.panelAnimations[i];
         if (animation) animation.cancel();
-        animation = this.panelAnimations[i] = panel.animate({ opacity: !panel.hasAttribute('hidden') ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
+        animation = this.panelAnimations[i] = panel.animate({ opacity: !panel.hasAttribute('hidden') ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0 });
         animation.addEventListener('finish', () => {
           this.panelAnimations[i] = null;
           panel.style.removeProperty('will-change');
