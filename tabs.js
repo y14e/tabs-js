@@ -48,6 +48,7 @@ class Tabs {
       }
       tab.setAttribute('aria-controls', this.panels[i % this.panels.length].getAttribute('id'));
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
+      if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
       tab.addEventListener('click', event => this.handleTabClick(event));
     });
     if (this.indicators.length) {
@@ -60,11 +61,9 @@ class Tabs {
       });
     }
     this.panels.forEach((panel, i) => {
-      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabs[i].getAttribute('id')}`.trim());
-      if (panel.hasAttribute('hidden')) {
-        panel.setAttribute('hidden', 'until-found');
-        panel.setAttribute('tabindex', '0');
-      }
+      const tab = this.tabs[i];
+      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.getAttribute('id')}`.trim());
+      if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', event => this.handlePanelBeforeMatch(event));
     });
 
@@ -81,6 +80,10 @@ class Tabs {
     this.root.setAttribute('data-tabs-initialized', '');
   }
 
+  isFocusable(element) {
+    return element.getAttribute('aria-disabled') !== 'true' && !element.hasAttribute('disabled');
+  }
+
   handleListKeyDown(event) {
     const list = event.currentTarget;
     const isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
@@ -94,9 +97,9 @@ class Tabs {
       active.click();
       return;
     }
-    const nonDisabledTabs = list.querySelectorAll(`${this.settings.selector.tab}:not(:is([aria-disabled="true"], :disabled))`);
-    const currentIndex = [...nonDisabledTabs].indexOf(active);
-    const length = nonDisabledTabs.length;
+    const focusableTabs = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
+    const currentIndex = [...focusableTabs].indexOf(active);
+    const length = focusableTabs.length;
     let newIndex = currentIndex;
     switch (key) {
       case previous:
@@ -112,7 +115,7 @@ class Tabs {
         newIndex = length - 1;
         break;
     }
-    const tab = nonDisabledTabs[newIndex];
+    const tab = focusableTabs[newIndex];
     tab.focus();
     if (!this.settings.manual) tab.click();
   }
@@ -164,12 +167,12 @@ class Tabs {
         panel.removeAttribute('hidden');
         panel.setAttribute('tabindex', '0');
       } else {
-        panel.setAttribute('hidden', 'until-found');
+        panel.setAttribute('hidden', this.isFocusable(this.tabs[i]) ? 'until-found' : '');
         panel.removeAttribute('tabindex');
       }
       if (this.settings.animation.crossFade) {
         panel.style.setProperty('will-change', [...new Set(window.getComputedStyle(panel).getPropertyValue('will-change').split(',')).add('opacity').values()].filter(value => value !== 'auto').join(','));
-        const opacity = panel.hasAttribute('hidden') ? window.getComputedStyle(panel).getPropertyValue('opacity') : '0';
+        const opacity = !panel.hasAttribute('hidden') ? '0' : window.getComputedStyle(panel).getPropertyValue('opacity');
         let animation = this.panelAnimations[i];
         if (animation) animation.cancel();
         animation = this.panelAnimations[i] = panel.animate({ opacity: !panel.hasAttribute('hidden') ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
