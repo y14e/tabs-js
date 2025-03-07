@@ -1,13 +1,13 @@
 class Tabs {
   constructor(root, options) {
-    this.root = root;
+    this.rootElement = root;
     this.defaults = {
       manual: false,
       selector: {
         list: '[role="tablist"]',
         tab: '[role="tab"]',
         indicator: '[data-tabs-indicator]',
-        content: '[role="tablist"] + *',
+        panels: '[role="tablist"] + *',
         panel: '[role="tabpanel"]',
       },
       animation: {
@@ -26,33 +26,33 @@ class Tabs {
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
-    this.lists = this.root.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
-    this.tabs = this.root.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
-    this.indicators = this.root.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
-    this.content = this.root.querySelector(`${this.settings.selector.content}${NOT_NESTED}`);
-    this.panels = this.root.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
-    if (!this.lists.length || !this.tabs.length || !this.content || !this.panels.length) return;
+    this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
+    this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
+    this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
+    this.panelsElement = this.rootElement.querySelector(`${this.settings.selector.panels}${NOT_NESTED}`);
+    this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
+    if (!this.listElements.length || !this.tabElements.length || !this.panelsElement || !this.panelElements.length) return;
     this.animation = null;
-    this.panelAnimations = Array(this.panels.length).fill(null);
+    this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.initialize();
   }
 
   initialize() {
-    this.lists.forEach(list => list.addEventListener('keydown', event => this.handleListKeyDown(event)));
-    this.tabs.forEach((tab, i) => {
+    this.listElements.forEach(list => list.addEventListener('keydown', event => this.handleListKeyDown(event)));
+    this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
-      if (i < this.panels.length) {
+      if (i < this.panelElements.length) {
         tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
-        const panel = this.panels[i];
+        const panel = this.panelElements[i];
         panel.setAttribute('id', panel.getAttribute('id') || `tab-panel-${id}`);
       }
-      tab.setAttribute('aria-controls', this.panels[i % this.panels.length].getAttribute('id'));
+      tab.setAttribute('aria-controls', this.panelElements[i % this.panelElements.length].getAttribute('id'));
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
       if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
       tab.addEventListener('click', event => this.handleTabClick(event));
     });
-    if (this.indicators.length) {
-      this.indicators.forEach(indicator => {
+    if (this.indicatorElements.length) {
+      this.indicatorElements.forEach(indicator => {
         const list = indicator.closest(this.settings.selector.list);
         list.style.setProperty('position', 'relative');
         indicator.style.setProperty('display', 'block');
@@ -60,24 +60,24 @@ class Tabs {
         new TabsIndicator(indicator, list, this.settings);
       });
     }
-    this.panels.forEach((panel, i) => {
-      const tab = this.tabs[i];
+    this.panelElements.forEach((panel, i) => {
+      const tab = this.tabElements[i];
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.getAttribute('id')}`.trim());
       if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', event => this.handlePanelBeforeMatch(event));
     });
 
     // Fix for WebKit
-    if (!['auto', '0px'].includes(window.getComputedStyle(this.content).getPropertyValue('min-height'))) {
-      this.panels.forEach(panel => {
+    if (!['auto', '0px'].includes(window.getComputedStyle(this.panelsElement).getPropertyValue('min-height'))) {
+      this.panelElements.forEach(panel => {
         new ResizeObserver(() => {
           if (panel.hasAttribute('hidden')) return;
-          window.requestAnimationFrame(() => panel.closest(this.settings.selector.content).style.setProperty('height', `${panel.scrollHeight}px`));
+          window.requestAnimationFrame(() => panel.closest(this.settings.selector.panels).style.setProperty('height', `${panel.scrollHeight}px`));
         }).observe(panel);
       });
     }
 
-    this.root.setAttribute('data-tabs-initialized', '');
+    this.rootElement.setAttribute('data-tabs-initialized', '');
   }
 
   isFocusable(element) {
@@ -131,18 +131,18 @@ class Tabs {
 
   activate(tab, isMatch = false) {
     if (tab.getAttribute('aria-selected') === 'true') return;
-    const root = this.root;
+    const root = this.rootElement;
     root.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
-    [...this.tabs].forEach(tab => {
+    [...this.tabElements].forEach(tab => {
       const isSelected = tab.getAttribute('aria-controls') === id;
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute('tabindex', isSelected ? '0' : '-1');
     });
-    this.content.style.setProperty('overflow', 'clip');
-    this.content.style.setProperty('position', 'relative');
-    this.content.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.content).getPropertyValue('will-change').split(',')).add('height').values()].filter(value => value !== 'auto').join(','));
-    [...this.panels].forEach(panel => {
+    this.panelsElement.style.setProperty('overflow', 'clip');
+    this.panelsElement.style.setProperty('position', 'relative');
+    this.panelsElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.panelsElement).getPropertyValue('will-change').split(',')).add('height').values()].filter(value => value !== 'auto').join(','));
+    [...this.panelElements].forEach(panel => {
       panel.style.setProperty('position', 'absolute');
       if (!panel.hasAttribute('hidden') || panel.getAttribute('id') === id) {
         panel.style.setProperty('content-visibility', 'visible');
@@ -153,21 +153,21 @@ class Tabs {
       }
       if (!this.settings.animation.crossFade && panel.getAttribute('id') !== id) panel.style.setProperty('visibility', 'hidden');
     });
-    const height = this.content.offsetHeight || [...this.panels].find(panel => !panel.hasAttribute('hidden')).offsetHeight;
+    const height = this.panelsElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden')).offsetHeight;
     if (this.animation) this.animation.cancel();
-    this.animation = this.content.animate({ height: [`${height}px`, `${document.getElementById(id).scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
+    this.animation = this.panelsElement.animate({ height: [`${height}px`, `${document.getElementById(id).scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
     this.animation.addEventListener('finish', () => {
       this.animation = null;
       root.removeAttribute('data-tabs-animating');
-      ['height', 'overflow', 'position', 'will-change'].forEach(name => this.content.style.removeProperty(name));
-      [...this.panels].forEach(panel => ['content-visibility', 'display', 'position', 'visibility'].forEach(name => panel.style.removeProperty(name)));
+      ['height', 'overflow', 'position', 'will-change'].forEach(name => this.panelsElement.style.removeProperty(name));
+      [...this.panelElements].forEach(panel => ['content-visibility', 'display', 'position', 'visibility'].forEach(name => panel.style.removeProperty(name)));
     });
-    [...this.panels].forEach((panel, i) => {
+    [...this.panelElements].forEach((panel, i) => {
       if (panel.getAttribute('id') === id) {
         panel.removeAttribute('hidden');
         panel.setAttribute('tabindex', '0');
       } else {
-        panel.setAttribute('hidden', this.isFocusable(this.tabs[i]) ? 'until-found' : '');
+        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
         panel.removeAttribute('tabindex');
       }
       if (this.settings.animation.crossFade) {
@@ -187,26 +187,26 @@ class Tabs {
 
 class TabsIndicator {
   constructor(indicator, list, settings) {
-    this.indicator = indicator;
-    this.list = list;
+    this.indicatorElement = indicator;
+    this.listElement = list;
     this.settings = settings;
     this.initialize();
   }
 
   initialize() {
     const update = () => this.update();
-    new ResizeObserver(update).observe(this.list);
-    new MutationObserver(update).observe(this.list, { attributeFilter: ['aria-selected'], subtree: true });
+    new ResizeObserver(update).observe(this.listElement);
+    new MutationObserver(update).observe(this.listElement, { attributeFilter: ['aria-selected'], subtree: true });
   }
 
   update() {
-    if (!this.indicator.checkVisibility()) return;
-    const isHorizontal = this.list.getAttribute('aria-orientation') !== 'vertical';
+    if (!this.indicatorElement.checkVisibility()) return;
+    const isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = isHorizontal ? 'left' : 'top';
     const size = isHorizontal ? 'width' : 'height';
-    this.indicator.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.indicator).getPropertyValue('will-change').split(',')).add(position).add(size).values()].filter(value => value !== 'auto').join(','));
-    const rect = this.list.querySelector('[aria-selected="true"]').getBoundingClientRect();
-    this.indicator.animate({ [position]: `${rect[position] - this.list.getBoundingClientRect()[position]}px`, [size]: `${rect[size]}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' }).addEventListener('finish', () => this.indicator.style.removeProperty('will-change'));
+    this.indicatorElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.indicatorElement).getPropertyValue('will-change').split(',')).add(position).add(size).values()].filter(value => value !== 'auto').join(','));
+    const rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    this.indicatorElement.animate({ [position]: `${rect[position] - this.listElement.getBoundingClientRect()[position]}px`, [size]: `${rect[size]}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' }).addEventListener('finish', () => this.indicatorElement.style.removeProperty('will-change'));
   }
 }
 
