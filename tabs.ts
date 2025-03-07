@@ -67,7 +67,7 @@ class Tabs {
   }
 
   private initialize(): void {
-    this.lists.forEach(list => list.addEventListener('keydown', event => this.handleKeyDown(event)));
+    this.lists.forEach(list => list.addEventListener('keydown', event => this.handleListKeyDown(event)));
     this.tabs.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       if (i < this.panels.length) {
@@ -77,7 +77,7 @@ class Tabs {
       }
       tab.setAttribute('aria-controls', this.panels[i % this.panels.length].getAttribute('id')!);
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
-      tab.addEventListener('click', event => this.handleClick(event));
+      tab.addEventListener('click', event => this.handleTabClick(event));
     });
     if (this.indicators.length) {
       this.indicators.forEach(indicator => {
@@ -94,7 +94,7 @@ class Tabs {
         panel.setAttribute('hidden', 'until-found');
         panel.setAttribute('tabindex', '0');
       }
-      panel.addEventListener('beforematch', event => this.handleBeforeMatch(event));
+      panel.addEventListener('beforematch', event => this.handlePanelBeforeMatch(event));
     });
 
     // Fix for WebKit
@@ -110,7 +110,7 @@ class Tabs {
     this.root.setAttribute('data-tabs-initialized', '');
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
+  private handleListKeyDown(event: KeyboardEvent): void {
     const list = event.currentTarget as HTMLElement;
     const isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const previous = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
@@ -123,9 +123,9 @@ class Tabs {
       active.click();
       return;
     }
-    const focusables = list.querySelectorAll(`${this.settings.selector.tab}:not(:is([aria-disabled="true"], :disabled))`);
-    const currentIndex = [...focusables].indexOf(active);
-    const length = focusables.length;
+    const nonDisabledTabs = list.querySelectorAll(`${this.settings.selector.tab}:not(:is([aria-disabled="true"], :disabled))`);
+    const currentIndex = [...nonDisabledTabs].indexOf(active);
+    const length = nonDisabledTabs.length;
     let newIndex = currentIndex;
     switch (key) {
       case previous:
@@ -141,17 +141,17 @@ class Tabs {
         newIndex = length - 1;
         break;
     }
-    const tab = focusables[newIndex] as HTMLElement;
+    const tab = nonDisabledTabs[newIndex] as HTMLElement;
     tab.focus();
     if (!this.settings.manual) tab.click();
   }
 
-  private handleClick(event: MouseEvent): void {
+  private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
     this.activate(event.currentTarget as HTMLElement);
   }
 
-  private handleBeforeMatch(event: Event): void {
+  private handlePanelBeforeMatch(event: Event): void {
     this.activate(document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).getAttribute('id')}"]`)!, true);
   }
 
