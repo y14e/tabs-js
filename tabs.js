@@ -25,7 +25,7 @@ class Tabs {
       animation: { ...this.defaults.animation, ...options?.animation },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
-    const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
+    let NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
     this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
     this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
@@ -40,10 +40,10 @@ class Tabs {
   initialize() {
     this.listElements.forEach(list => list.addEventListener('keydown', event => this.handleListKeyDown(event)));
     this.tabElements.forEach((tab, i) => {
-      const id = Math.random().toString(36).slice(-8);
+      let id = Math.random().toString(36).slice(-8);
       if (i < this.panelElements.length) {
         tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
-        const panel = this.panelElements[i];
+        let panel = this.panelElements[i];
         panel.setAttribute('id', panel.getAttribute('id') || `tab-panel-${id}`);
       }
       tab.setAttribute('aria-controls', this.panelElements[i % this.panelElements.length].getAttribute('id'));
@@ -53,7 +53,7 @@ class Tabs {
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
-        const list = indicator.closest(this.settings.selector.list);
+        let list = indicator.closest(this.settings.selector.list);
         list.style.setProperty('position', 'relative');
         indicator.style.setProperty('display', 'block');
         indicator.style.setProperty('position', 'absolute');
@@ -61,7 +61,7 @@ class Tabs {
       });
     }
     this.panelElements.forEach((panel, i) => {
-      const tab = this.tabElements[i];
+      let tab = this.tabElements[i];
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.getAttribute('id')}`.trim());
       if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', event => this.handlePanelBeforeMatch(event));
@@ -85,21 +85,21 @@ class Tabs {
   }
 
   handleListKeyDown(event) {
-    const list = event.currentTarget;
-    const isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
-    const previous = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
-    const next = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
-    const { key } = event;
+    let list = event.currentTarget;
+    let isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
+    let previous = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
+    let next = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
+    let { key } = event;
     if (![' ', 'Enter', previous, next, 'Home', 'End'].includes(key)) return;
     event.preventDefault();
-    const active = document.activeElement;
+    let active = document.activeElement;
     if ([' ', 'Enter'].includes(key)) {
       active.click();
       return;
     }
-    const focusableTabs = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
-    const currentIndex = [...focusableTabs].indexOf(active);
-    const length = focusableTabs.length;
+    let focusableTabs = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
+    let currentIndex = [...focusableTabs].indexOf(active);
+    let length = focusableTabs.length;
     let newIndex = currentIndex;
     switch (key) {
       case previous:
@@ -115,7 +115,7 @@ class Tabs {
         newIndex = length - 1;
         break;
     }
-    const tab = focusableTabs[newIndex];
+    let tab = focusableTabs[newIndex];
     tab.focus();
     if (!this.settings.manual) tab.click();
   }
@@ -131,11 +131,11 @@ class Tabs {
 
   activate(tab, isMatch = false) {
     if (tab.getAttribute('aria-selected') === 'true') return;
-    const root = this.rootElement;
+    let root = this.rootElement;
     root.setAttribute('data-tabs-animating', '');
-    const id = tab.getAttribute('aria-controls');
+    let id = tab.getAttribute('aria-controls');
     [...this.tabElements].forEach(tab => {
-      const isSelected = tab.getAttribute('aria-controls') === id;
+      let isSelected = tab.getAttribute('aria-controls') === id;
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute('tabindex', isSelected ? '0' : '-1');
     });
@@ -153,7 +153,7 @@ class Tabs {
       }
       if (!this.settings.animation.crossFade && panel.getAttribute('id') !== id) panel.style.setProperty('visibility', 'hidden');
     });
-    const height = this.panelsElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden')).offsetHeight;
+    let height = this.panelsElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden')).offsetHeight;
     if (this.animation) this.animation.cancel();
     this.animation = this.panelsElement.animate({ height: [`${height}px`, `${document.getElementById(id).scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
     this.animation.addEventListener('finish', () => {
@@ -172,7 +172,7 @@ class Tabs {
       }
       if (this.settings.animation.crossFade) {
         panel.style.setProperty('will-change', [...new Set(window.getComputedStyle(panel).getPropertyValue('will-change').split(',')).add('opacity').values()].filter(value => value !== 'auto').join(','));
-        const opacity = !panel.hasAttribute('hidden') ? '0' : window.getComputedStyle(panel).getPropertyValue('opacity');
+        let opacity = !panel.hasAttribute('hidden') ? '0' : window.getComputedStyle(panel).getPropertyValue('opacity');
         let animation = this.panelAnimations[i];
         if (animation) animation.cancel();
         animation = this.panelAnimations[i] = panel.animate({ opacity: !panel.hasAttribute('hidden') ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
@@ -194,18 +194,18 @@ class TabsIndicator {
   }
 
   initialize() {
-    const update = () => this.update();
+    let update = () => this.update();
     new ResizeObserver(update).observe(this.listElement);
     new MutationObserver(update).observe(this.listElement, { attributeFilter: ['aria-selected'], subtree: true });
   }
 
   update() {
     if (!this.indicatorElement.checkVisibility()) return;
-    const isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
-    const position = isHorizontal ? 'left' : 'top';
-    const size = isHorizontal ? 'width' : 'height';
+    let isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
+    let position = isHorizontal ? 'left' : 'top';
+    let size = isHorizontal ? 'width' : 'height';
     this.indicatorElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.indicatorElement).getPropertyValue('will-change').split(',')).add(position).add(size).values()].filter(value => value !== 'auto').join(','));
-    const rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    let rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
     this.indicatorElement.animate({ [position]: `${rect[position] - this.listElement.getBoundingClientRect()[position]}px`, [size]: `${rect[size]}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' }).addEventListener('finish', () => this.indicatorElement.style.removeProperty('will-change'));
   }
 }
