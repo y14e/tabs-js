@@ -96,14 +96,12 @@ class Tabs {
     });
 
     // Fix for WebKit
-    if (!['auto', '0px'].includes(window.getComputedStyle(this.panelsElement).getPropertyValue('min-height'))) {
-      this.panelElements.forEach(panel => {
-        new ResizeObserver(() => {
-          if (panel.hasAttribute('hidden')) return;
-          window.requestAnimationFrame(() => (panel.closest(this.settings.selector.panels) as HTMLElement).style.setProperty('height', `${panel.scrollHeight}px`));
-        }).observe(panel);
-      });
-    }
+    this.panelElements.forEach(panel => {
+      new ResizeObserver(() => {
+        if (panel.hasAttribute('hidden')) return;
+        window.requestAnimationFrame(() => (panel.closest(this.settings.selector.panels) as HTMLElement).style.setProperty('height', `${panel.scrollHeight}px`));
+      }).observe(panel);
+    });
 
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
