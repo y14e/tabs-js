@@ -98,10 +98,12 @@ class Tabs {
     // Fix for WebKit
     this.panelElements.forEach(panel => {
       new ResizeObserver(() => {
-        if (window.getComputedStyle(this.panelsElement).getPropertyValue('min-height') === '0px') return;
         let height = panel.scrollHeight;
         if (!height) return;
-        window.requestAnimationFrame(() => this.panelsElement.style.setProperty('height', `${height}px`));
+        window.requestAnimationFrame(() => {
+          this.panelsElement.style.setProperty('height', `${height}px`);
+          window.requestAnimationFrame(() => this.panelsElement.style.removeProperty('height'));
+        });
       }).observe(panel);
     });
 
