@@ -98,11 +98,10 @@ class Tabs {
     // Fix for WebKit
     this.panelElements.forEach(panel => {
       new ResizeObserver(() => {
-        let panels = panel.closest(this.settings.selector.panels) as HTMLElement;
-        if (!/flex|grid/.test(window.getComputedStyle(panels.parentElement!).getPropertyValue('display'))) return;
+        if (window.getComputedStyle(this.panelsElement).getPropertyValue('min-height') === '0px') return;
         let height = panel.scrollHeight;
         if (!height) return;
-        panels.style.setProperty('height', `${height}px`);
+        window.requestAnimationFrame(() => this.panelsElement.style.setProperty('height', `${height}px`));
       }).observe(panel);
     });
 
