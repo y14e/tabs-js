@@ -98,8 +98,11 @@ class Tabs {
     // Fix for WebKit
     this.panelElements.forEach(panel => {
       new ResizeObserver(() => {
-        if (panel.hasAttribute('hidden')) return;
-        window.requestAnimationFrame(() => (panel.closest(this.settings.selector.panels) as HTMLElement).style.setProperty('height', `${panel.scrollHeight}px`));
+        let panels = panel.closest(this.settings.selector.panels) as HTMLElement;
+        if (!/flex|grid/.test(window.getComputedStyle(panels.parentElement!).getPropertyValue('display'))) return;
+        let height = panel.scrollHeight;
+        if (!height) return;
+        panels.style.setProperty('height', `${height}px`);
       }).observe(panel);
     });
 
@@ -232,8 +235,8 @@ class TabsIndicator {
   private update(): void {
     if (!this.indicatorElement.checkVisibility()) return;
     let isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
-    let position = isHorizontal ? 'left' : 'top';
-    let size = isHorizontal ? 'width' : 'height';
+    let position: keyof DOMRect = isHorizontal ? 'left' : 'top';
+    let size: keyof DOMRect = isHorizontal ? 'width' : 'height';
     this.indicatorElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.indicatorElement).getPropertyValue('will-change').split(',')).add(position).add(size).values()].filter(value => value !== 'auto').join(','));
     let rect = this.listElement.querySelector('[aria-selected="true"]')!.getBoundingClientRect();
     this.indicatorElement.animate({ [position]: `${rect[position] - this.listElement.getBoundingClientRect()[position]}px`, [size]: `${rect[size]}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' }).addEventListener('finish', () => this.indicatorElement.style.removeProperty('will-change'));

@@ -70,8 +70,11 @@ class Tabs {
     // Fix for WebKit
     this.panelElements.forEach(panel => {
       new ResizeObserver(() => {
-        if (panel.hasAttribute('hidden')) return;
-        window.requestAnimationFrame(() => panel.closest(this.settings.selector.panels).style.setProperty('height', `${panel.scrollHeight}px`));
+        let panels = panel.closest(this.settings.selector.panels);
+        if (!/flex|grid/.test(window.getComputedStyle(panels.parentElement).getPropertyValue('display'))) return;
+        let height = panel.scrollHeight;
+        if (!height) return;
+        panels.style.setProperty('height', `${height}px`);
       }).observe(panel);
     });
 
