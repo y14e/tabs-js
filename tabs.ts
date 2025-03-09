@@ -152,15 +152,18 @@ class Tabs {
 
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
-    this.activate(event.currentTarget as HTMLElement);
+    let tab = event.currentTarget as HTMLElement;
+    if (tab.getAttribute('aria-selected') === 'true') return;
+    this.activate(tab);
   }
 
   private handlePanelBeforeMatch(event: Event): void {
-    this.activate(document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).getAttribute('id')}"]`)!, true);
+    let tab = document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).getAttribute('id')}"]`) as HTMLElement;
+    if (tab.getAttribute('aria-selected') === 'true') return;
+    this.activate(tab, true);
   }
 
   activate(tab: HTMLElement, isMatch = false): void {
-    if (tab.getAttribute('aria-selected') === 'true') return;
     let root = this.rootElement;
     root.setAttribute('data-tabs-animating', '');
     let id = tab.getAttribute('aria-controls');

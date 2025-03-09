@@ -124,15 +124,18 @@ class Tabs {
 
   handleTabClick(event) {
     event.preventDefault();
-    this.activate(event.currentTarget);
+    let tab = event.currentTarget;
+    if (tab.getAttribute('aria-selected') === 'true') return;
+    this.activate(tab);
   }
 
   handlePanelBeforeMatch(event) {
-    this.activate(document.querySelector(`[aria-controls="${event.currentTarget.getAttribute('id')}"]`), true);
+    let tab = document.querySelector(`[aria-controls="${event.currentTarget.getAttribute('id')}"]`);
+    if (tab.getAttribute('aria-selected') === 'true') return;
+    this.activate(tab, true);
   }
 
   activate(tab, isMatch = false) {
-    if (tab.getAttribute('aria-selected') === 'true') return;
     let root = this.rootElement;
     root.setAttribute('data-tabs-animating', '');
     let id = tab.getAttribute('aria-controls');
