@@ -58,7 +58,7 @@ class Tabs {
     this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
     this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
     this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
-    this.panelsElement = this.rootElement.querySelector(`${this.settings.selector.panels}${NOT_NESTED}`) as HTMLElement;
+    this.panelsElement = this.rootElement.querySelector(this.settings.selector.panels) as HTMLElement;
     this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
     if (!this.listElements.length || !this.tabElements.length || !this.panelsElement || !this.panelElements.length) return;
     this.animation = null;
