@@ -4,7 +4,7 @@ type TabsOptions = {
     list: string;
     tab: string;
     indicator: string;
-    panels: string;
+    content: string;
     panel: string;
   };
   animation: {
@@ -23,7 +23,7 @@ class Tabs {
   listElements: NodeListOf<HTMLElement>;
   tabElements: NodeListOf<HTMLElement>;
   indicatorElements: NodeListOf<HTMLElement>;
-  panelsElement: HTMLElement;
+  contentElement: HTMLElement;
   panelElements: NodeListOf<HTMLElement>;
   animation!: Animation | null;
   panelAnimations!: (Animation | null)[];
@@ -36,7 +36,7 @@ class Tabs {
         list: '[role="tablist"]',
         tab: '[role="tab"]',
         indicator: '[data-tabs-indicator]',
-        panels: '[role="tablist"] + *',
+        content: '[role="tablist"] + *',
         panel: '[role="tabpanel"]',
       },
       animation: {
@@ -58,9 +58,9 @@ class Tabs {
     this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
     this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
     this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
-    this.panelsElement = this.rootElement.querySelector(this.settings.selector.panels) as HTMLElement;
+    this.contentElement = this.rootElement.querySelector(this.settings.selector.content) as HTMLElement;
     this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
-    if (!this.listElements.length || !this.tabElements.length || !this.panelsElement || !this.panelElements.length) return;
+    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
     this.animation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.initialize();
@@ -101,8 +101,8 @@ class Tabs {
         let height = panel.scrollHeight;
         if (!height) return;
         window.requestAnimationFrame(() => {
-          this.panelsElement.style.setProperty('height', `${height}px`);
-          window.requestAnimationFrame(() => this.panelsElement.style.removeProperty('height'));
+          this.contentElement.style.setProperty('height', `${height}px`);
+          window.requestAnimationFrame(() => this.contentElement.style.removeProperty('height'));
         });
       }).observe(panel);
     });
@@ -172,23 +172,21 @@ class Tabs {
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute('tabindex', isSelected ? '0' : '-1');
     });
-    this.panelsElement.style.setProperty('overflow', 'clip');
-    this.panelsElement.style.setProperty('position', 'relative');
-    this.panelsElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.panelsElement).getPropertyValue('will-change').split(',')).add('height').values()].filter(value => value !== 'auto').join(','));
+    this.contentElement.style.setProperty('overflow', 'clip');
+    this.contentElement.style.setProperty('position', 'relative');
+    this.contentElement.style.setProperty('will-change', [...new Set(window.getComputedStyle(this.contentElement).getPropertyValue('will-change').split(',')).add('height').values()].filter(value => value !== 'auto').join(','));
     [...this.panelElements].forEach(panel => {
       if (panel.getAttribute('id') === id) {
         panel.setAttribute('tabindex', '0');
       } else {
         panel.removeAttribute('tabindex');
       }
-      if (this.settings.animation.crossFade) {
-        panel.style.setProperty('content-visibility', 'visible');
-        panel.style.setProperty('display', 'block');
-        panel.style.setProperty('opacity', !panel.hasAttribute('hidden') ? '1' : '0');
-      }
+      panel.style.setProperty('content-visibility', 'visible');
+      panel.style.setProperty('display', 'block');
+      if (this.settings.animation.crossFade) panel.style.setProperty('opacity', !panel.hasAttribute('hidden') ? '1' : '0');
       panel.style.setProperty('position', 'absolute');
     });
-    let height = this.panelsElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden'))!.offsetHeight;
+    let height = this.contentElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden'))!.offsetHeight;
     [...this.panelElements].forEach((panel, i) => {
       if (panel.getAttribute('id') === id) {
         panel.removeAttribute('hidden');
@@ -197,11 +195,11 @@ class Tabs {
       }
     });
     if (this.animation) this.animation.cancel();
-    this.animation = this.panelsElement.animate({ height: [`${height}px`, `${document.getElementById(id!)!.scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
+    this.animation = this.contentElement.animate({ height: [`${height}px`, `${document.getElementById(id!)!.scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
     this.animation.addEventListener('finish', () => {
       this.animation = null;
       root.removeAttribute('data-tabs-animating');
-      ['height', 'overflow', 'position', 'will-change'].forEach(name => this.panelsElement.style.removeProperty(name));
+      ['height', 'overflow', 'position', 'will-change'].forEach(name => this.contentElement.style.removeProperty(name));
       [...this.panelElements].forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
     });
     if (this.settings.animation.crossFade) {
