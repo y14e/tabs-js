@@ -154,7 +154,7 @@ class Tabs {
       }
       if (this.settings.animation.crossFade) {
         panel.style.setProperty('content-visibility', 'visible');
-        panel.style.setProperty('display', 'block'); // Fix for WebKit
+        panel.style.setProperty('display', 'block');
         panel.style.setProperty('opacity', !panel.hasAttribute('hidden') ? '1' : '0');
       }
       panel.style.setProperty('position', 'absolute');
