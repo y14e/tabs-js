@@ -25,8 +25,8 @@ class Tabs {
   indicatorElements: NodeListOf<HTMLElement>;
   contentElement: HTMLElement;
   panelElements: NodeListOf<HTMLElement>;
-  animation!: Animation | null;
-  panelAnimations!: (Animation | null)[];
+  animation: Animation | null = null;
+  panelAnimations: (Animation | null)[] = [];
 
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
     this.rootElement = root;
