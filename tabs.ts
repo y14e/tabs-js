@@ -125,7 +125,7 @@ class Tabs {
         newIndex = length - 1;
         break;
     }
-    let tab = focusables[newIndex] as HTMLElement;
+    let tab = focusables[newIndex];
     tab.focus();
     if (!this.settings.manual) tab.click();
   }
