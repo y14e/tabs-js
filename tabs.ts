@@ -187,7 +187,7 @@ class Tabs {
         let animation = this.panelAnimations[i];
         let opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
         if (animation) animation.cancel();
-        animation = this.panelAnimations[i] = panel.animate({ opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease', fill: 'forwards' });
+        animation = this.panelAnimations[i] = panel.animate({ opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
         animation.addEventListener('finish', () => {
           this.panelAnimations[i] = null;
           panel.style.removeProperty('opacity');
