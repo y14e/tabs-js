@@ -63,23 +63,21 @@ class Tabs {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
     this.animation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
+    this.handleListKeyDown = this.handleListKeyDown.bind(this);
+    this.handleTabClick = this.handleTabClick.bind(this);
+    this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
     this.initialize();
   }
 
   private initialize(): void {
-    this.listElements.forEach(list =>
-      list.addEventListener(
-        'keydown',
-        this.throttle(event => this.handleListKeyDown(event)),
-      ),
-    );
+    this.listElements.forEach(list => list.addEventListener('keydown', this.throttle(this.handleListKeyDown)));
     this.tabElements.forEach((tab, i) => {
       let id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
       if (i < this.panelElements.length) tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
       if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
-      tab.addEventListener('click', event => this.handleTabClick(event));
+      tab.addEventListener('click', this.handleTabClick);
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
@@ -93,7 +91,7 @@ class Tabs {
     this.panelElements.forEach((panel, i) => {
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i].getAttribute('id')}`.trim());
       if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
-      panel.addEventListener('beforematch', event => this.handlePanelBeforeMatch(event));
+      panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
