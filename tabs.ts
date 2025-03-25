@@ -182,7 +182,7 @@ class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
     });
-    let height = this.contentElement.offsetHeight || [...this.panelElements].find(panel => !panel.hasAttribute('hidden'))!.offsetHeight;
+    let blockSize = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle([...this.panelElements].find(panel => !panel.hasAttribute('hidden'))!).getPropertyValue('block-size'));
     [...this.panelElements].forEach((panel, i) => {
       if (panel.getAttribute('id') === id) {
         panel.removeAttribute('hidden');
@@ -191,11 +191,11 @@ class Tabs {
       }
     });
     if (this.animation) this.animation.cancel();
-    this.animation = this.contentElement.animate({ height: [`${height}px`, `${document.getElementById(id!)!.scrollHeight}px`] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
+    this.animation = this.contentElement.animate({ blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
     this.animation.addEventListener('finish', () => {
       this.animation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['height', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
+      ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
       [...this.panelElements].forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
     });
     if (this.settings.animation.crossFade) {
@@ -234,10 +234,10 @@ class TabsIndicator {
   private update(): void {
     if (!this.indicatorElement.checkVisibility()) return;
     let isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
-    let position: keyof DOMRect = isHorizontal ? 'left' : 'top';
-    let size: keyof DOMRect = isHorizontal ? 'width' : 'height';
+    let position = isHorizontal ? 'insetInlineStart' : 'insetBlockStart';
+    let size = isHorizontal ? 'inlineSize' : 'blockSize';
     let rect = this.listElement.querySelector('[aria-selected="true"]')!.getBoundingClientRect();
-    this.indicatorElement.animate({ [position]: `${rect[position] - this.listElement.getBoundingClientRect()[position]}px`, [size]: `${rect[size]}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' });
+    this.indicatorElement.animate({ [position]: `${rect[isHorizontal ? 'left' : 'top'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'left' : 'top']}px`, [size]: `${rect[isHorizontal ? 'width' : 'height']}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' });
   }
 }
 
