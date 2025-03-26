@@ -17,16 +17,16 @@ type TabsOptions = {
 };
 
 class Tabs {
-  rootElement: HTMLElement;
-  defaults: TabsOptions;
-  settings: TabsOptions;
-  listElements: NodeListOf<HTMLElement>;
-  tabElements: NodeListOf<HTMLElement>;
-  indicatorElements: NodeListOf<HTMLElement>;
-  contentElement: HTMLElement;
-  panelElements: NodeListOf<HTMLElement>;
-  animation: Animation | null = null;
-  panelAnimations: (Animation | null)[] = [];
+  private rootElement: HTMLElement;
+  private defaults: TabsOptions;
+  private settings: TabsOptions;
+  private listElements: NodeListOf<HTMLElement>;
+  private tabElements: NodeListOf<HTMLElement>;
+  private indicatorElements: NodeListOf<HTMLElement>;
+  private contentElement: HTMLElement;
+  private panelElements: NodeListOf<HTMLElement>;
+  private animation: Animation | null = null;
+  private panelAnimations: (Animation | null)[] = [];
 
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
     this.rootElement = root;
@@ -214,9 +214,9 @@ class Tabs {
 }
 
 class TabsIndicator {
-  indicatorElement: HTMLElement;
-  listElement: HTMLElement;
-  settings: TabsOptions;
+  private indicatorElement: HTMLElement;
+  private listElement: HTMLElement;
+  private settings: TabsOptions;
 
   constructor(indicator: HTMLElement, list: HTMLElement, settings: TabsOptions) {
     this.indicatorElement = indicator;
