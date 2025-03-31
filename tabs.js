@@ -32,7 +32,7 @@ class Tabs {
     this.contentElement = this.rootElement.querySelector(this.settings.selector.content);
     this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
-    this.animation = null;
+    this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.handleListKeyDown = this.handleListKeyDown.bind(this);
     this.handleTabClick = this.handleTabClick.bind(this);
@@ -161,10 +161,10 @@ class Tabs {
         panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
       }
     });
-    if (this.animation) this.animation.cancel();
-    this.animation = this.contentElement.animate({ blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id)).getPropertyValue('block-size')] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
-    this.animation.addEventListener('finish', () => {
-      this.animation = null;
+    if (this.contentAnimation) this.contentAnimation.cancel();
+    this.contentAnimation = this.contentElement.animate({ blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id)).getPropertyValue('block-size')] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
+    this.contentAnimation.addEventListener('finish', () => {
+      this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
       ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
       [...this.panelElements].forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
