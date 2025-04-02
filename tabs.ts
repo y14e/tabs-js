@@ -73,7 +73,7 @@ class Tabs {
     this.listElements.forEach(list => list.addEventListener('keydown', this.throttle(this.handleListKeyDown)));
     this.tabElements.forEach((tab, i) => {
       let id = Math.random().toString(36).slice(-8);
-      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
+      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length]!.id ||= `tab-panel-${id}`));
       if (i < this.panelElements.length) tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
       if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
@@ -89,7 +89,7 @@ class Tabs {
       });
     }
     this.panelElements.forEach((panel, i) => {
-      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i].getAttribute('id')}`.trim());
+      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i]!.getAttribute('id')}`.trim());
       if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
@@ -141,7 +141,7 @@ class Tabs {
         newIndex = length - 1;
         break;
     }
-    let tab = focusables[newIndex];
+    let tab = focusables[newIndex]!;
     tab.focus();
     if (!this.settings.manual) tab.click();
   }
@@ -187,7 +187,7 @@ class Tabs {
       if (panel.getAttribute('id') === id) {
         panel.removeAttribute('hidden');
       } else {
-        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
+        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]!) ? 'until-found' : '');
       }
     });
     if (this.contentAnimation) this.contentAnimation.cancel();
