@@ -1,4 +1,4 @@
-class Tabs {
+export class Tabs {
   constructor(root, options) {
     this.rootElement = root;
     this.defaults = {
@@ -207,5 +207,3 @@ class TabsIndicator {
     this.indicatorElement.animate({ [position]: `${rect[isHorizontal ? 'left' : 'top'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'left' : 'top']}px`, [size]: `${rect[isHorizontal ? 'width' : 'height']}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' });
   }
 }
-
-export default Tabs;
