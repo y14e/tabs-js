@@ -53,14 +53,18 @@ export class Tabs {
       selector: { ...this.defaults.selector, ...options?.selector },
       animation: { ...this.defaults.animation, ...options?.animation },
     };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
+    }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
     this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
     this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
     this.contentElement = this.rootElement.querySelector(this.settings.selector.content) as HTMLElement;
     this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
-    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
+    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
+      return;
+    }
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.handleListKeyDown = this.handleListKeyDown.bind(this);
@@ -70,13 +74,19 @@ export class Tabs {
   }
 
   private initialize(): void {
-    this.listElements.forEach(list => list.addEventListener('keydown', this.handleListKeyDown));
+    this.listElements.forEach(list => {
+      list.addEventListener('keydown', this.handleListKeyDown);
+    });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length]!.id ||= `tab-panel-${id}`));
-      if (i < this.panelElements.length) tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
+      if (i < this.panelElements.length) {
+        tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
+      }
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
-      if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
+      if (!this.isFocusable(tab)) {
+        tab.style.setProperty('pointer-events', 'none');
+      }
       tab.addEventListener('click', this.handleTabClick);
     });
     if (this.indicatorElements.length) {
@@ -90,7 +100,9 @@ export class Tabs {
     }
     this.panelElements.forEach((panel, i) => {
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i]!.getAttribute('id')}`.trim());
-      if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
+      if (!panel.hasAttribute('hidden')) {
+        panel.setAttribute('tabindex', '0');
+      }
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
@@ -106,7 +118,9 @@ export class Tabs {
     const PREVIOUS_KEY = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
     const NEXT_KEY = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
     const { key } = event;
-    if (!['Enter', ' ', PREVIOUS_KEY, NEXT_KEY, 'End', 'Home'].includes(key)) return;
+    if (!['Enter', ' ', PREVIOUS_KEY, NEXT_KEY, 'End', 'Home'].includes(key)) {
+      return;
+    }
     event.preventDefault();
     const active = document.activeElement as HTMLElement;
     if (['Enter', ' '].includes(key)) {
@@ -130,19 +144,25 @@ export class Tabs {
     }
     const tab = focusables[newIndex]!;
     tab.focus();
-    if (!this.settings.manual) tab.click();
+    if (!this.settings.manual) {
+      tab.click();
+    }
   }
 
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
     const tab = event.currentTarget as HTMLElement;
-    if (tab.getAttribute('aria-selected') === 'true') return;
+    if (tab.getAttribute('aria-selected') === 'true') {
+      return;
+    }
     this.activate(tab);
   }
 
   private handlePanelBeforeMatch(event: Event): void {
     const tab = document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).getAttribute('id')}"]`) as HTMLElement;
-    if (tab.getAttribute('aria-selected') === 'true') return;
+    if (tab.getAttribute('aria-selected') === 'true') {
+      return;
+    }
     this.activate(tab, true);
   }
 
@@ -177,19 +197,29 @@ export class Tabs {
         panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]!) ? 'until-found' : '');
       }
     });
-    if (this.contentAnimation) this.contentAnimation.cancel();
+    if (this.contentAnimation) {
+      this.contentAnimation.cancel();
+    }
     this.contentAnimation = this.contentElement.animate({ blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
-      [...this.panelElements].forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
+      ['block-size', 'overflow', 'position'].forEach(name => {
+        this.contentElement.style.removeProperty(name);
+      });
+      [...this.panelElements].forEach(panel => {
+        ['content-visibility', 'display', 'position'].forEach(name => {
+          panel.style.removeProperty(name);
+        });
+      });
     });
     if (this.settings.animation.crossFade) {
       [...this.panelElements].forEach((panel, i) => {
         let animation = this.panelAnimations[i];
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
-        if (animation) animation.cancel();
+        if (animation) {
+          animation.cancel();
+        }
         animation = this.panelAnimations[i] = panel.animate({ opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
         animation.addEventListener('finish', () => {
           this.panelAnimations[i] = null;
@@ -219,7 +249,9 @@ class TabsIndicator {
   }
 
   private update(): void {
-    if (!this.indicatorElement.checkVisibility()) return;
+    if (!this.indicatorElement.checkVisibility()) {
+      return;
+    }
     const isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = isHorizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = isHorizontal ? 'inlineSize' : 'blockSize';
