@@ -41,7 +41,7 @@ export class Tabs {
   }
 
   initialize() {
-    this.listElements.forEach(list => list.addEventListener('keydown', this.throttle(this.handleListKeyDown)));
+    this.listElements.forEach(list => list.addEventListener('keydown', this.handleListKeyDown));
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
@@ -69,19 +69,6 @@ export class Tabs {
 
   isFocusable(element) {
     return element.getAttribute('aria-disabled') !== 'true' && !element.hasAttribute('disabled');
-  }
-
-  throttle(callback) {
-    let timer = null;
-    return event => {
-      const isHorizontal = event.currentTarget.getAttribute('aria-orientation') !== 'vertical';
-      if (['Enter', ' ', `Arrow${isHorizontal ? 'Left' : 'Up'}`, `Arrow${isHorizontal ? 'Right' : 'Down'}`, 'End', 'Home'].includes(event.key)) event.preventDefault();
-      if (timer) return;
-      callback(event);
-      timer = window.setTimeout(() => {
-        timer = null;
-      }, 300);
-    };
   }
 
   handleListKeyDown(event) {
