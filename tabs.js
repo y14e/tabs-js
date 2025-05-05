@@ -64,8 +64,10 @@ export class Tabs {
       this.indicatorElements.forEach(indicator => {
         const list = indicator.closest(this.settings.selector.list);
         list.style.setProperty('position', 'relative');
-        indicator.style.setProperty('display', 'block');
-        indicator.style.setProperty('position', 'absolute');
+        Object.assign(indicator.style, {
+          display: 'block',
+          position: 'absolute',
+        });
         new TabsIndicator(indicator, list, this.settings);
       });
     }
@@ -145,8 +147,10 @@ export class Tabs {
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute('tabindex', isSelected ? '0' : '-1');
     });
-    this.contentElement.style.setProperty('overflow', 'clip');
-    this.contentElement.style.setProperty('position', 'relative');
+    Object.assign(this.contentElement.style, {
+      overflow: 'clip',
+      position: 'relative',
+    });
     [...this.panelElements].forEach(panel => {
       if (panel.getAttribute('id') === id) {
         panel.setAttribute('tabindex', '0');
@@ -154,9 +158,11 @@ export class Tabs {
         panel.removeAttribute('tabindex');
       }
       if (this.settings.animation.crossFade) {
-        panel.style.setProperty('content-visibility', 'visible');
-        panel.style.setProperty('display', 'block');
-        panel.style.setProperty('opacity', !panel.hasAttribute('hidden') ? '1' : '0');
+        Object.assign(panel.style, {
+          contentVisibility: 'visible',
+          display: 'block',
+          opacity: !panel.hasAttribute('hidden') ? '1' : '0',
+        });
       }
       panel.style.setProperty('position', 'absolute');
     });
