@@ -91,7 +91,7 @@ export class Tabs {
     const PREVIOUS_KEY = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
     const NEXT_KEY = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
     const { key } = event;
-    if (!['Enter', ' ', PREVIOUS_KEY, NEXT_KEY, 'End', 'Home'].includes(key)) {
+    if (!['Enter', ' ', 'End', 'Home', PREVIOUS_KEY, NEXT_KEY].includes(key)) {
       return;
     }
     event.preventDefault();
@@ -103,16 +103,19 @@ export class Tabs {
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
     const currentIndex = [...focusables].indexOf(active);
     const length = focusables.length;
-    let newIndex = 0;
+    let newIndex;
     switch (key) {
+      case 'End':
+        newIndex = length - 1;
+        break;
+      case 'Home':
+        newIndex = 0;
+        break;
       case PREVIOUS_KEY:
         newIndex = (currentIndex - 1 + length) % length;
         break;
       case NEXT_KEY:
         newIndex = (currentIndex + 1) % length;
-        break;
-      case 'End':
-        newIndex = length - 1;
         break;
     }
     const tab = focusables[newIndex];
