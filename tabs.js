@@ -21,8 +21,14 @@ export class Tabs {
     this.settings = {
       ...this.defaults,
       ...options,
-      selector: { ...this.defaults.selector, ...options?.selector },
-      animation: { ...this.defaults.animation, ...options?.animation },
+      selector: {
+        ...this.defaults.selector,
+        ...options?.selector,
+      },
+      animation: {
+        ...this.defaults.animation,
+        ...options?.animation,
+      },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
@@ -180,7 +186,15 @@ export class Tabs {
     if (this.contentAnimation) {
       this.contentAnimation.cancel();
     }
-    this.contentAnimation = this.contentElement.animate({ blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id)).getPropertyValue('block-size')] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: this.settings.animation.easing });
+    this.contentAnimation = this.contentElement.animate(
+      {
+        blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id)).getPropertyValue('block-size')],
+      },
+      {
+        duration: !isMatch ? this.settings.animation.duration : 0,
+        easing: this.settings.animation.easing,
+      },
+    );
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
@@ -200,7 +214,15 @@ export class Tabs {
         if (animation) {
           animation.cancel();
         }
-        animation = this.panelAnimations[i] = panel.animate({ opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'] }, { duration: !isMatch ? this.settings.animation.duration : 0, easing: 'ease' });
+        animation = this.panelAnimations[i] = panel.animate(
+          {
+            opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'],
+          },
+          {
+            duration: !isMatch ? this.settings.animation.duration : 0,
+            easing: 'ease',
+          },
+        );
         animation.addEventListener('finish', () => {
           this.panelAnimations[i] = null;
           panel.style.removeProperty('opacity');
@@ -232,6 +254,16 @@ class TabsIndicator {
     const position = isHorizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = isHorizontal ? 'inlineSize' : 'blockSize';
     const rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
-    this.indicatorElement.animate({ [position]: `${rect[isHorizontal ? 'left' : 'top'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'left' : 'top']}px`, [size]: `${rect[isHorizontal ? 'width' : 'height']}px` }, { duration: this.settings.animation.indicatorDuration, easing: this.settings.animation.indicatorEasing, fill: 'forwards' });
+    this.indicatorElement.animate(
+      {
+        [position]: `${rect[isHorizontal ? 'left' : 'top'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'left' : 'top']}px`,
+        [size]: `${rect[isHorizontal ? 'width' : 'height']}px`,
+      },
+      {
+        duration: this.settings.animation.indicatorDuration,
+        easing: this.settings.animation.indicatorEasing,
+        fill: 'forwards',
+      },
+    );
   }
 }
