@@ -20,11 +20,11 @@ export class Tabs {
   private rootElement: HTMLElement;
   private defaults: TabsOptions;
   private settings: TabsOptions;
-  private listElements: NodeListOf<HTMLElement>;
-  private tabElements: NodeListOf<HTMLElement>;
-  private indicatorElements: NodeListOf<HTMLElement>;
+  private listElements: HTMLElement[];
+  private tabElements: HTMLElement[];
+  private indicatorElements: HTMLElement[];
   private contentElement: HTMLElement;
-  private panelElements: NodeListOf<HTMLElement>;
+  private panelElements: HTMLElement[];
   private contentAnimation: Animation | null = null;
   private panelAnimations: (Animation | null)[] = [];
 
@@ -63,11 +63,11 @@ export class Tabs {
       this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
-    this.listElements = this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`);
-    this.tabElements = this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`);
-    this.indicatorElements = this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`);
+    this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)] as HTMLElement[];
+    this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)] as HTMLElement[];
+    this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)] as HTMLElement[];
     this.contentElement = this.rootElement.querySelector(this.settings.selector.content) as HTMLElement;
-    this.panelElements = this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`);
+    this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)] as HTMLElement[];
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
@@ -136,7 +136,7 @@ export class Tabs {
       return;
     }
     const focusables = ([...list.querySelectorAll(this.settings.selector.tab)] as HTMLElement[]).filter(this.isFocusable);
-    const currentIndex = [...focusables].indexOf(active);
+    const currentIndex = focusables.indexOf(active);
     const length = focusables.length;
     let newIndex: number;
     switch (key) {
@@ -180,7 +180,7 @@ export class Tabs {
   activate(tab: HTMLElement, isMatch = false): void {
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
-    [...this.tabElements].forEach(tab => {
+    this.tabElements.forEach(tab => {
       const isSelected = tab.getAttribute('aria-controls') === id;
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute('tabindex', isSelected ? '0' : '-1');
@@ -189,7 +189,7 @@ export class Tabs {
       overflow: 'clip',
       position: 'relative',
     });
-    [...this.panelElements].forEach(panel => {
+    this.panelElements.forEach(panel => {
       if (panel.getAttribute('id') === id) {
         panel.setAttribute('tabindex', '0');
       } else {
@@ -204,8 +204,8 @@ export class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
     });
-    const blockSize = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle([...this.panelElements].find(panel => !panel.hasAttribute('hidden'))!).getPropertyValue('block-size'));
-    [...this.panelElements].forEach((panel, i) => {
+    const blockSize = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hasAttribute('hidden'))!).getPropertyValue('block-size'));
+    this.panelElements.forEach((panel, i) => {
       if (panel.getAttribute('id') === id) {
         panel.removeAttribute('hidden');
       } else {
@@ -230,14 +230,14 @@ export class Tabs {
       ['block-size', 'overflow', 'position'].forEach(name => {
         this.contentElement.style.removeProperty(name);
       });
-      [...this.panelElements].forEach(panel => {
+      this.panelElements.forEach(panel => {
         ['content-visibility', 'display', 'position'].forEach(name => {
           panel.style.removeProperty(name);
         });
       });
     });
     if (this.settings.animation.crossFade) {
-      [...this.panelElements].forEach((panel, i) => {
+      this.panelElements.forEach((panel, i) => {
         let animation = this.panelAnimations[i];
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
         if (animation) {
