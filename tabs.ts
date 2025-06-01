@@ -25,8 +25,8 @@ export class Tabs {
   private indicatorElements: HTMLElement[];
   private contentElement: HTMLElement;
   private panelElements: HTMLElement[];
-  private contentAnimation: Animation | null = null;
-  private panelAnimations: (Animation | null)[] = [];
+  private contentAnimation!: Animation | null;
+  private panelAnimations!: (Animation | null)[];
 
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
     this.rootElement = root;
