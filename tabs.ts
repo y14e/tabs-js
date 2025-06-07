@@ -130,13 +130,13 @@ export class Tabs {
       return;
     }
     event.preventDefault();
-    const active = document.activeElement as HTMLElement;
+    const current = document.activeElement as HTMLElement;
     if (['Enter', ' '].includes(key)) {
-      active.click();
+      current.click();
       return;
     }
     const focusables = ([...list.querySelectorAll(this.settings.selector.tab)] as HTMLElement[]).filter(this.isFocusable);
-    const currentIndex = focusables.indexOf(active);
+    const currentIndex = focusables.indexOf(current);
     const length = focusables.length;
     let newIndex: number;
     switch (key) {
