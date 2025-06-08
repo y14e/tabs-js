@@ -44,16 +44,13 @@ export class Tabs {
     }
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
-    this.handleListKeyDown = this.handleListKeyDown.bind(this);
     this.handleTabClick = this.handleTabClick.bind(this);
+    this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
     this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
     this.initialize();
   }
 
   initialize() {
-    this.listElements.forEach(list => {
-      list.addEventListener('keydown', this.handleListKeyDown);
-    });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
@@ -65,6 +62,7 @@ export class Tabs {
         tab.style.setProperty('pointer-events', 'none');
       }
       tab.addEventListener('click', this.handleTabClick);
+      tab.addEventListener('keydown', this.handleTabKeyDown);
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
@@ -91,8 +89,17 @@ export class Tabs {
     return element.getAttribute('aria-disabled') !== 'true' && !element.hasAttribute('disabled');
   }
 
-  handleListKeyDown(event) {
-    const list = event.currentTarget;
+  handleTabClick(event) {
+    event.preventDefault();
+    const tab = event.currentTarget;
+    if (tab.getAttribute('aria-selected') === 'true') {
+      return;
+    }
+    this.activate(tab);
+  }
+
+  handleTabKeyDown(event) {
+    const list = event.currentTarget.closest(this.settings.selector.list);
     const isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const PREVIOUS_KEY = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
     const NEXT_KEY = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
@@ -129,15 +136,6 @@ export class Tabs {
     if (!this.settings.manual) {
       tab.click();
     }
-  }
-
-  handleTabClick(event) {
-    event.preventDefault();
-    const tab = event.currentTarget;
-    if (tab.getAttribute('aria-selected') === 'true') {
-      return;
-    }
-    this.activate(tab);
   }
 
   handlePanelBeforeMatch(event) {
