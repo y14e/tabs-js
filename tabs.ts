@@ -71,6 +71,9 @@ export class Tabs {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
+    this.handleTabClick = this.handleTabClick.bind(this);
+    this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
+    this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length]!.id ||= `tab-panel-${id}`));
@@ -104,9 +107,6 @@ export class Tabs {
     });
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
-    this.handleTabClick = this.handleTabClick.bind(this);
-    this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
-    this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
 
