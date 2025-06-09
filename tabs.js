@@ -228,10 +228,6 @@ class TabsIndicator {
     this.indicatorElement = indicator;
     this.listElement = list;
     this.settings = settings;
-    this.initialize();
-  }
-
-  initialize() {
     const update = this.update.bind(this);
     new ResizeObserver(update).observe(this.listElement);
     new MutationObserver(update).observe(this.listElement, {
