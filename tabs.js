@@ -246,7 +246,7 @@ class TabsIndicator {
     const rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
     this.indicatorElement.animate(
       {
-        [position]: `${rect[isHorizontal ? 'left' : 'top'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'left' : 'top']}px`,
+        [position]: `${rect[isHorizontal ? 'x' : 'y'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'x' : 'y']}px`,
         [size]: `${rect[isHorizontal ? 'width' : 'height']}px`,
       },
       {
