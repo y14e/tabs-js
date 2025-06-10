@@ -93,9 +93,9 @@ export class Tabs {
 
   handleTabKeyDown(event) {
     const list = event.currentTarget.closest(this.settings.selector.list);
-    const isHorizontal = list.getAttribute('aria-orientation') !== 'vertical';
-    const PREVIOUS_KEY = `Arrow${isHorizontal ? 'Left' : 'Up'}`;
-    const NEXT_KEY = `Arrow${isHorizontal ? 'Right' : 'Down'}`;
+    const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
+    const PREVIOUS_KEY = `Arrow${horizontal ? 'Left' : 'Up'}`;
+    const NEXT_KEY = `Arrow${horizontal ? 'Right' : 'Down'}`;
     const { key } = event;
     if (!['Enter', ' ', 'End', 'Home', PREVIOUS_KEY, NEXT_KEY].includes(key)) {
       return;
@@ -139,13 +139,13 @@ export class Tabs {
     this.activate(tab, true);
   }
 
-  activate(tab, isMatch = false) {
+  activate(tab, match = false) {
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {
-      const isSelected = tab.getAttribute('aria-controls') === id;
-      tab.setAttribute('aria-selected', String(isSelected));
-      tab.setAttribute('tabindex', isSelected ? '0' : '-1');
+      const selected = tab.getAttribute('aria-controls') === id;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.setAttribute('tabindex', selected ? '0' : '-1');
     });
     Object.assign(this.contentElement.style, {
       overflow: 'clip',
@@ -182,7 +182,7 @@ export class Tabs {
         blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id)).getPropertyValue('block-size')],
       },
       {
-        duration: !isMatch ? this.settings.animation.duration : 0,
+        duration: !match ? this.settings.animation.duration : 0,
         easing: this.settings.animation.easing,
       },
     );
@@ -210,7 +210,7 @@ export class Tabs {
             opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'],
           },
           {
-            duration: !isMatch ? this.settings.animation.duration : 0,
+            duration: !match ? this.settings.animation.duration : 0,
             easing: 'ease',
           },
         );
@@ -240,14 +240,15 @@ class TabsIndicator {
     if (!this.indicatorElement.checkVisibility()) {
       return;
     }
-    const isHorizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
-    const position = isHorizontal ? 'insetInlineStart' : 'insetBlockStart';
-    const size = isHorizontal ? 'inlineSize' : 'blockSize';
-    const rect = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
+    const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
+    const size = horizontal ? 'inlineSize' : 'blockSize';
+    const { x, y, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
     this.indicatorElement.animate(
       {
-        [position]: `${rect[isHorizontal ? 'x' : 'y'] - this.listElement.getBoundingClientRect()[isHorizontal ? 'x' : 'y']}px`,
-        [size]: `${rect[isHorizontal ? 'width' : 'height']}px`,
+        [position]: `${horizontal ? x - listX : y - listY}px`,
+        [size]: `${horizontal ? width : height}px`,
       },
       {
         duration: this.settings.animation.indicatorDuration,
