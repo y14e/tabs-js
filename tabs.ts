@@ -68,11 +68,18 @@ export class Tabs {
     this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)] as HTMLElement[];
     this.contentElement = this.rootElement.querySelector(this.settings.selector.content) as HTMLElement;
     this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)] as HTMLElement[];
+    this.contentAnimation = null;
+    this.panelAnimations = Array(this.panelElements.length).fill(null);
+    this.handleTabClick = this.handleTabClick.bind(this);
+    this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
+    this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
+    this.initialize();
+  }
+
+  private initialize(): void {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
-    this.contentAnimation = null;
-    this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length]!.id ||= `tab-panel-${id}`));
@@ -83,8 +90,8 @@ export class Tabs {
       if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
-      tab.addEventListener('click', this.handleTabClick.bind(this));
-      tab.addEventListener('keydown', this.handleTabKeyDown.bind(this));
+      tab.addEventListener('click', this.handleTabClick);
+      tab.addEventListener('keydown', this.handleTabKeyDown);
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
@@ -102,7 +109,7 @@ export class Tabs {
       if (!panel.hasAttribute('hidden')) {
         panel.setAttribute('tabindex', '0');
       }
-      panel.addEventListener('beforematch', this.handlePanelBeforeMatch.bind(this));
+      panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
