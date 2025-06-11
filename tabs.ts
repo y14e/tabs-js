@@ -82,11 +82,11 @@ export class Tabs {
     }
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
-      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length]!.id ||= `tab-panel-${id}`));
+      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
       if (i < this.panelElements.length) {
-        tab.setAttribute('id', tab.getAttribute('id') || `tab-${id}`);
+        tab.id ||= `tab-${id}`;
       }
-      tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' ? '0' : '-1');
+      tab.tabIndex = tab.ariaSelected === 'true' ? 0 : -1;
       if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
@@ -105,9 +105,9 @@ export class Tabs {
       });
     }
     this.panelElements.forEach((panel, i) => {
-      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i]!.getAttribute('id')}`.trim());
-      if (!panel.hasAttribute('hidden')) {
-        panel.setAttribute('tabindex', '0');
+      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i].id}`.trim());
+      if (!panel.hidden) {
+        panel.tabIndex = 0;
       }
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
@@ -115,13 +115,13 @@ export class Tabs {
   }
 
   private isFocusable(element: HTMLElement): boolean {
-    return element.getAttribute('aria-disabled') !== 'true' && !element.hasAttribute('disabled');
+    return element.ariaDisabled !== 'true' && !element.hasAttribute('disabled');
   }
 
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
     const tab = event.currentTarget as HTMLElement;
-    if (tab.getAttribute('aria-selected') === 'true') {
+    if (tab.ariaSelected === 'true') {
       return;
     }
     this.activate(tab);
@@ -129,7 +129,7 @@ export class Tabs {
 
   private handleTabKeyDown(event: KeyboardEvent): void {
     const list = (event.currentTarget as HTMLElement).closest(this.settings.selector.list) as HTMLElement;
-    const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
+    const horizontal = list.ariaOrientation !== 'vertical';
     const PREVIOUS_KEY = `Arrow${horizontal ? 'Left' : 'Up'}`;
     const NEXT_KEY = `Arrow${horizontal ? 'Right' : 'Down'}`;
     const { key } = event;
@@ -168,8 +168,8 @@ export class Tabs {
   }
 
   private handlePanelBeforeMatch(event: Event): void {
-    const tab = document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).getAttribute('id')}"]`) as HTMLElement;
-    if (tab.getAttribute('aria-selected') === 'true') {
+    const tab = document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement;
+    if (tab.ariaSelected === 'true') {
       return;
     }
     this.activate(tab, true);
@@ -180,16 +180,16 @@ export class Tabs {
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {
       const selected = tab.getAttribute('aria-controls') === id;
-      tab.setAttribute('aria-selected', String(selected));
-      tab.setAttribute('tabindex', selected ? '0' : '-1');
+      tab.ariaSelected = String(selected);
+      tab.tabIndex = selected ? 0 : -1;
     });
     Object.assign(this.contentElement.style, {
       overflow: 'clip',
       position: 'relative',
     });
     this.panelElements.forEach(panel => {
-      if (panel.getAttribute('id') === id) {
-        panel.setAttribute('tabindex', '0');
+      if (panel.id === id) {
+        panel.tabIndex = 0;
       } else {
         panel.removeAttribute('tabindex');
       }
@@ -202,12 +202,12 @@ export class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
     });
-    const blockSize = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hasAttribute('hidden'))!).getPropertyValue('block-size'));
+    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)!).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
-      if (panel.getAttribute('id') === id) {
+      if (panel.id === id) {
         panel.removeAttribute('hidden');
       } else {
-        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]!) ? 'until-found' : '');
+        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
       }
     });
     if (this.contentAnimation) {
@@ -215,7 +215,7 @@ export class Tabs {
     }
     this.contentAnimation = this.contentElement.animate(
       {
-        blockSize: [`${blockSize}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')],
+        blockSize: [`${size}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')],
       },
       {
         duration: !match ? this.settings.animation.duration : 0,
@@ -243,7 +243,7 @@ export class Tabs {
         }
         animation = this.panelAnimations[i] = panel.animate(
           {
-            opacity: panel.getAttribute('id') === id ? [opacity, '1'] : [opacity, '0'],
+            opacity: panel.id === id ? [opacity, '1'] : [opacity, '0'],
           },
           {
             duration: !match ? this.settings.animation.duration : 0,
