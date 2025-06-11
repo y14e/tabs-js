@@ -145,7 +145,7 @@ export class Tabs {
     const focusables = ([...list.querySelectorAll(this.settings.selector.tab)] as HTMLElement[]).filter(this.isFocusable);
     const currentIndex = focusables.indexOf(current);
     const length = focusables.length;
-    let newIndex: number;
+    let newIndex!: number;
     switch (key) {
       case 'End':
         newIndex = length - 1;
@@ -160,7 +160,7 @@ export class Tabs {
         newIndex = (currentIndex + 1) % length;
         break;
     }
-    const tab = focusables[newIndex!];
+    const tab = focusables[newIndex];
     tab.focus();
     if (this.settings.manual) {
       return;
