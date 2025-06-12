@@ -114,16 +114,16 @@ export class Tabs {
     }
     event.preventDefault();
     event.stopPropagation();
-    const current = document.activeElement;
-    if (['Enter', ' '].includes(key)) {
-      current.click();
-      return;
-    }
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
+    const current = document.activeElement;
     const currentIndex = focusables.indexOf(current);
     const length = focusables.length;
     let newIndex;
     switch (key) {
+      case 'Enter':
+      case ' ':
+        current.click();
+        return;
       case 'End':
         newIndex = length - 1;
         break;
