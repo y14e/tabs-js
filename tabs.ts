@@ -80,13 +80,17 @@ export class Tabs {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
+    this.listElements.slice(1).forEach(list => {
+      list.ariaHidden = 'true';
+    });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
-      if (i < this.panelElements.length) {
+      const duplicates = this.isDuplicates(tab);
+      if (!duplicates) {
         tab.id ||= `tab-${id}`;
       }
-      tab.tabIndex = tab.ariaSelected === 'true' ? 0 : -1;
+      tab.tabIndex = tab.ariaSelected === 'true' && !duplicates ? 0 : -1;
       if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
@@ -112,6 +116,10 @@ export class Tabs {
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
+  }
+
+  private isDuplicates(tab: HTMLElement): boolean {
+    return this.tabElements.indexOf(tab) >= this.panelElements.length;
   }
 
   private isFocusable(element: HTMLElement): boolean {
@@ -184,7 +192,7 @@ export class Tabs {
     this.tabElements.forEach(tab => {
       const selected = tab.getAttribute('aria-controls') === id;
       tab.ariaSelected = String(selected);
-      tab.tabIndex = selected ? 0 : -1;
+      tab.tabIndex = selected && !this.isDuplicates(tab) ? 0 : -1;
     });
     Object.assign(this.contentElement.style, {
       overflow: 'clip',
