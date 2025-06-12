@@ -100,11 +100,7 @@ export class Tabs {
   handleTabClick(event) {
     event.preventDefault();
     event.stopPropagation();
-    const tab = event.currentTarget;
-    if (tab.ariaSelected === 'true') {
-      return;
-    }
-    this.activate(tab);
+    this.activate(event.currentTarget);
   }
 
   handleTabKeyDown(event) {
@@ -150,14 +146,13 @@ export class Tabs {
   }
 
   handlePanelBeforeMatch(event) {
-    const tab = document.querySelector(`[aria-controls="${event.currentTarget.id}"]`);
-    if (tab.ariaSelected === 'true') {
-      return;
-    }
-    this.activate(tab, true);
+    this.activate(document.querySelector(`[aria-controls="${event.currentTarget.id}"]`), true);
   }
 
   activate(tab, match = false) {
+    if (tab.ariaSelected === 'true') {
+      return;
+    }
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {

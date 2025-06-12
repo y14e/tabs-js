@@ -129,11 +129,7 @@ export class Tabs {
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    const tab = event.currentTarget as HTMLElement;
-    if (tab.ariaSelected === 'true') {
-      return;
-    }
-    this.activate(tab);
+    this.activate(event.currentTarget as HTMLElement);
   }
 
   private handleTabKeyDown(event: KeyboardEvent): void {
@@ -179,14 +175,13 @@ export class Tabs {
   }
 
   private handlePanelBeforeMatch(event: Event): void {
-    const tab = document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement;
-    if (tab.ariaSelected === 'true') {
-      return;
-    }
-    this.activate(tab, true);
+    this.activate(document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement, true);
   }
 
   activate(tab: HTMLElement, match = false): void {
+    if (tab.ariaSelected === 'true') {
+      return;
+    }
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {
