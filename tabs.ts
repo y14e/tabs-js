@@ -120,6 +120,7 @@ export class Tabs {
 
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
+    event.stopPropagation();
     const tab = event.currentTarget as HTMLElement;
     if (tab.ariaSelected === 'true') {
       return;
@@ -137,6 +138,7 @@ export class Tabs {
       return;
     }
     event.preventDefault();
+    event.stopPropagation();
     const current = document.activeElement as HTMLElement;
     if (['Enter', ' '].includes(key)) {
       current.click();

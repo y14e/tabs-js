@@ -91,6 +91,7 @@ export class Tabs {
 
   handleTabClick(event) {
     event.preventDefault();
+    event.stopPropagation();
     const tab = event.currentTarget;
     if (tab.ariaSelected === 'true') {
       return;
@@ -108,6 +109,7 @@ export class Tabs {
       return;
     }
     event.preventDefault();
+    event.stopPropagation();
     const current = document.activeElement;
     if (['Enter', ' '].includes(key)) {
       current.click();
