@@ -74,7 +74,7 @@ export class Tabs {
       },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.settings.animation.content.duration = this.settings.animation.indicator.duration = 0;
+      this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)] as HTMLElement[];
