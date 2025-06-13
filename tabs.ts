@@ -8,11 +8,15 @@ type TabsOptions = {
     panel: string;
   };
   animation: {
-    crossFade: boolean;
-    duration: number;
-    easing: string;
-    indicatorDuration: number;
-    indicatorEasing: string;
+    indicator: {
+      duration: number;
+      easing: string;
+    };
+    content: {
+      crossFade: boolean;
+      duration: number;
+      easing: string;
+    };
   };
 };
 
@@ -31,7 +35,6 @@ export class Tabs {
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
     this.rootElement = root;
     this.defaults = {
-      manual: false,
       selector: {
         list: '[role="tablist"]',
         tab: '[role="tab"]',
@@ -40,12 +43,17 @@ export class Tabs {
         panel: '[role="tabpanel"]',
       },
       animation: {
-        crossFade: true,
-        duration: 300,
-        easing: 'ease',
-        indicatorDuration: 300,
-        indicatorEasing: 'ease',
+        indicator: {
+          duration: 300,
+          easing: 'ease',
+        },
+        content: {
+          crossFade: true,
+          duration: 300,
+          easing: 'ease',
+        },
       },
+      manual: false,
     };
     this.settings = {
       ...this.defaults,
@@ -55,12 +63,18 @@ export class Tabs {
         ...options?.selector,
       },
       animation: {
-        ...this.defaults.animation,
-        ...options?.animation,
+        indicator: {
+          ...this.defaults.animation.indicator,
+          ...options?.animation?.indicator,
+        },
+        content: {
+          ...this.defaults.animation.content,
+          ...options?.animation?.content,
+        },
       },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.settings.animation.duration = this.settings.animation.indicatorDuration = 0;
+      this.settings.animation.content.duration = this.settings.animation.indicator.duration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)] as HTMLElement[];
@@ -199,7 +213,7 @@ export class Tabs {
       } else {
         panel.removeAttribute('tabindex');
       }
-      if (this.settings.animation.crossFade) {
+      if (this.settings.animation.content.crossFade) {
         Object.assign(panel.style, {
           contentVisibility: 'visible',
           display: 'block',
@@ -224,8 +238,8 @@ export class Tabs {
         blockSize: [`${size}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')],
       },
       {
-        duration: !match ? this.settings.animation.duration : 0,
-        easing: this.settings.animation.easing,
+        duration: !match ? this.settings.animation.content.duration : 0,
+        easing: this.settings.animation.content.easing,
       },
     );
     this.contentAnimation.addEventListener('finish', () => {
@@ -240,7 +254,7 @@ export class Tabs {
         });
       });
     });
-    if (this.settings.animation.crossFade) {
+    if (this.settings.animation.content.crossFade) {
       this.panelElements.forEach((panel, i) => {
         let animation = this.panelAnimations[i];
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
@@ -252,7 +266,7 @@ export class Tabs {
             opacity: panel.id === id ? [opacity, '1'] : [opacity, '0'],
           },
           {
-            duration: !match ? this.settings.animation.duration : 0,
+            duration: !match ? this.settings.animation.content.duration : 0,
             easing: 'ease',
           },
         );
@@ -297,8 +311,8 @@ class TabsIndicator {
         [size]: `${horizontal ? width : height}px`,
       },
       {
-        duration: this.settings.animation.indicatorDuration,
-        easing: this.settings.animation.indicatorEasing,
+        duration: this.settings.animation.indicator.duration,
+        easing: this.settings.animation.indicator.easing,
         fill: 'forwards',
       },
     );
