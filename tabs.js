@@ -119,13 +119,13 @@ export class Tabs {
     event.preventDefault();
     event.stopPropagation();
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
+    const length = focusables.length;
     const active = document.activeElement;
     const current = active instanceof HTMLElement ? active : null;
     if (!current) {
       return;
     }
     const currentIndex = focusables.indexOf(current);
-    const length = focusables.length;
     let newIndex;
     switch (key) {
       case 'Enter':
@@ -213,14 +213,8 @@ export class Tabs {
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['block-size', 'overflow', 'position'].forEach(name => {
-        this.contentElement.style.removeProperty(name);
-      });
-      this.panelElements.forEach(panel => {
-        ['content-visibility', 'display', 'position'].forEach(name => {
-          panel.style.removeProperty(name);
-        });
-      });
+      ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
+      this.panelElements.forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
     });
     if (this.settings.animation.content.crossFade) {
       this.panelElements.forEach((panel, i) => {
