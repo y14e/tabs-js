@@ -1,5 +1,8 @@
 export class Tabs {
   constructor(root, options) {
+    if (!root) {
+      return;
+    }
     this.rootElement = root;
     this.defaults = {
       selector: {
@@ -25,19 +28,10 @@ export class Tabs {
     this.settings = {
       ...this.defaults,
       ...options,
-      selector: {
-        ...this.defaults.selector,
-        ...options?.selector,
-      },
+      selector: { ...this.defaults.selector, ...options?.selector },
       animation: {
-        indicator: {
-          ...this.defaults.animation.indicator,
-          ...options?.animation?.indicator,
-        },
-        content: {
-          ...this.defaults.animation.content,
-          ...options?.animation?.content,
-        },
+        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
+        content: { ...this.defaults.animation.content, ...options?.animation?.content },
       },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -125,7 +119,11 @@ export class Tabs {
     event.preventDefault();
     event.stopPropagation();
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
-    const current = document.activeElement;
+    const active = document.activeElement;
+    const current = active instanceof HTMLElement ? active : null;
+    if (!current) {
+      return;
+    }
     const currentIndex = focusables.indexOf(current);
     const length = focusables.length;
     let newIndex;
@@ -160,6 +158,9 @@ export class Tabs {
   }
 
   activate(tab, match = false) {
+    if (!this.tabElements.includes(tab)) {
+      return;
+    }
     if (tab.ariaSelected === 'true') {
       return;
     }
