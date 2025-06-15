@@ -21,14 +21,14 @@ type TabsOptions = {
 };
 
 export class Tabs {
-  private rootElement: HTMLElement;
-  private defaults: TabsOptions;
-  private settings: TabsOptions;
-  private listElements: HTMLElement[];
-  private tabElements: HTMLElement[];
-  private indicatorElements: HTMLElement[];
-  private contentElement: HTMLElement;
-  private panelElements: HTMLElement[];
+  private rootElement!: HTMLElement;
+  private defaults!: TabsOptions;
+  private settings!: TabsOptions;
+  private listElements!: HTMLElement[];
+  private tabElements!: HTMLElement[];
+  private indicatorElements!: HTMLElement[];
+  private contentElement!: HTMLElement;
+  private panelElements!: HTMLElement[];
   private contentAnimation!: Animation | null;
   private panelAnimations!: (Animation | null)[];
 
