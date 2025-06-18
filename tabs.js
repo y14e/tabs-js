@@ -19,7 +19,7 @@ export class Tabs {
         },
         content: {
           crossFade: true,
-          duration: 1000,
+          duration: 300,
           easing: 'ease',
           fade: false,
         },
