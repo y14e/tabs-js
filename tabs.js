@@ -19,8 +19,9 @@ export class Tabs {
         },
         content: {
           crossFade: true,
-          duration: 300,
+          duration: 1000,
           easing: 'ease',
+          fade: false,
         },
       },
       manual: false,
@@ -189,7 +190,7 @@ export class Tabs {
       } else {
         panel.removeAttribute('tabindex');
       }
-      if (this.settings.animation.content.crossFade) {
+      if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
         Object.assign(panel.style, {
           contentVisibility: 'visible',
           display: 'block',
@@ -224,18 +225,20 @@ export class Tabs {
       ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
       this.panelElements.forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
     });
-    if (this.settings.animation.content.crossFade) {
+    if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
       this.panelElements.forEach((panel, i) => {
         let animation = this.panelAnimations[i];
+        const selected = panel.id === id;
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
         if (animation) {
           animation.cancel();
         }
         animation = this.panelAnimations[i] = panel.animate(
           {
-            opacity: panel.id === id ? [opacity, '1'] : [opacity, '0'],
+            opacity: selected ? [opacity, '1'] : [opacity, '0'],
           },
           {
+            delay: !match && selected && this.settings.animation.content.fade ? this.settings.animation.content.duration / 2 : 0,
             duration: !match ? this.settings.animation.content.duration : 0,
             easing: 'ease',
           },
