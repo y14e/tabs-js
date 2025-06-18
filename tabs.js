@@ -64,6 +64,9 @@ export class Tabs {
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
+      if (!tab.ariaSelected) {
+        tab.ariaSelected = 'false';
+      }
       const duplicates = this.isDuplicates(tab);
       if (!duplicates) {
         tab.id ||= `tab-${id}`;
