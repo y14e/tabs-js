@@ -102,6 +102,14 @@ export class Tabs {
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
 
+  getActiveElement() {
+    let active = document.activeElement;
+    while (active instanceof HTMLElement && active.shadowRoot?.activeElement) {
+      active = active.shadowRoot.activeElement;
+    }
+    return active instanceof HTMLElement ? active : null;
+  }
+
   isDuplicates(tab) {
     return this.tabElements.indexOf(tab) >= this.panelElements.length;
   }
@@ -129,7 +137,7 @@ export class Tabs {
     event.stopPropagation();
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
     const length = focusables.length;
-    const active = document.activeElement;
+    const active = this.getActiveElement();
     const current = active instanceof HTMLElement ? active : null;
     if (!current) {
       return;
@@ -198,6 +206,7 @@ export class Tabs {
         });
       }
       panel.style.setProperty('position', 'absolute');
+      panel.style.setProperty('width', '100%');
     });
     const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
@@ -223,7 +232,7 @@ export class Tabs {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
       ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
-      this.panelElements.forEach(panel => ['content-visibility', 'display', 'position'].forEach(name => panel.style.removeProperty(name)));
+      this.panelElements.forEach(panel => ['content-visibility', 'display', 'position', 'width'].forEach(name => panel.style.removeProperty(name)));
     });
     if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
       this.panelElements.forEach((panel, i) => {
@@ -235,10 +244,9 @@ export class Tabs {
         }
         animation = this.panelAnimations[i] = panel.animate(
           {
-            opacity: selected ? [opacity, '1'] : [opacity, '0'],
+            opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'],
           },
           {
-            delay: !match && selected && this.settings.animation.content.fade ? this.settings.animation.content.duration / 2 : 0,
             duration: !match ? this.settings.animation.content.duration : 0,
             easing: 'ease',
           },
