@@ -59,7 +59,7 @@ export class Tabs {
           fade: false,
         },
       },
-      avoidDuplicates: false,
+      avoidDuplicates: true,
       manual: false,
     };
     this.settings = {
