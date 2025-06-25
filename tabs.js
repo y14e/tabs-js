@@ -24,6 +24,7 @@ export class Tabs {
           fade: false,
         },
       },
+      avoidDuplicates: false,
       manual: false,
     };
     this.settings = {
@@ -57,7 +58,7 @@ export class Tabs {
       return;
     }
     this.listElements.forEach((list, i) => {
-      if (i) {
+      if (this.settings.avoidDuplicates && i) {
         list.ariaHidden = 'true';
       }
       list.role = 'tablist';
@@ -69,14 +70,16 @@ export class Tabs {
         tab.ariaSelected = 'false';
       }
       const duplicates = this.isDuplicates(tab);
-      if (!duplicates) {
+      if (!this.settings.avoidDuplicates || !duplicates) {
         tab.id ||= `tab-${id}`;
       }
       tab.role = 'tab';
-      tab.tabIndex = tab.ariaSelected === 'true' && !duplicates ? 0 : -1;
+      tab.tabIndex = tab.ariaSelected === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? 0 : -1;
       if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
+      const panel = this.panelElements[i % this.panelElements.length];
+      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.id}`.trim());
       tab.addEventListener('click', this.handleTabClick);
       tab.addEventListener('keydown', this.handleTabKeyDown);
     });
@@ -91,8 +94,7 @@ export class Tabs {
         new TabsIndicator(indicator, list, this.settings);
       });
     }
-    this.panelElements.forEach((panel, i) => {
-      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${this.tabElements[i].id}`.trim());
+    this.panelElements.forEach(panel => {
       panel.role = 'tabpanel';
       if (!panel.hidden) {
         panel.tabIndex = 0;
@@ -186,7 +188,7 @@ export class Tabs {
     this.tabElements.forEach(tab => {
       const selected = tab.getAttribute('aria-controls') === id;
       tab.ariaSelected = String(selected);
-      tab.tabIndex = selected && !this.isDuplicates(tab) ? 0 : -1;
+      tab.tabIndex = selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? 0 : -1;
     });
     Object.assign(this.contentElement.style, {
       overflow: 'clip',
