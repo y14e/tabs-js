@@ -163,11 +163,10 @@ export class Tabs {
 
   private handleTabKeyDown(event: KeyboardEvent): void {
     const list = (event.currentTarget as HTMLElement).closest(this.settings.selector.list) as HTMLElement;
+    const both = list.ariaOrientation === 'undefined';
     const horizontal = list.ariaOrientation !== 'vertical';
-    const PREVIOUS_KEY = `Arrow${horizontal ? 'Left' : 'Up'}`;
-    const NEXT_KEY = `Arrow${horizontal ? 'Right' : 'Down'}`;
     const { key } = event;
-    if (!['Enter', ' ', 'End', 'Home', PREVIOUS_KEY, NEXT_KEY].includes(key)) {
+    if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) {
       return;
     }
     event.preventDefault();
@@ -192,10 +191,12 @@ export class Tabs {
       case 'Home':
         newIndex = 0;
         break;
-      case PREVIOUS_KEY:
+      case 'ArrowLeft':
+      case 'ArrowUp':
         newIndex = (currentIndex - 1 + length) % length;
         break;
-      case NEXT_KEY:
+      case 'ArrowRight':
+      case 'ArrowDown':
         newIndex = (currentIndex + 1) % length;
         break;
     }
@@ -208,7 +209,7 @@ export class Tabs {
   }
 
   private handlePanelBeforeMatch(event: Event): void {
-    this.activate(document.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement, true);
+    this.activate(this.rootElement.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement, true);
   }
 
   activate(tab: HTMLElement, match = false): void {
@@ -255,7 +256,7 @@ export class Tabs {
     }
     this.contentAnimation = this.contentElement.animate(
       {
-        blockSize: [`${size}px`, window.getComputedStyle(document.getElementById(id!)!).getPropertyValue('block-size')],
+        blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)!).getPropertyValue('block-size')],
       },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
