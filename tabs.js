@@ -5,36 +5,36 @@ export class Tabs {
     }
     this.rootElement = root;
     this.defaults = {
-      selector: {
-        list: '[role="tablist"]',
-        tab: '[role="tab"]',
-        indicator: '[data-tabs-indicator]',
-        content: '[role="tablist"] + *',
-        panel: '[role="tabpanel"]',
-      },
       animation: {
-        indicator: {
-          duration: 300,
-          easing: 'ease',
-        },
         content: {
           crossFade: true,
           duration: 300,
           easing: 'ease',
           fade: false,
         },
+        indicator: {
+          duration: 300,
+          easing: 'ease',
+        },
       },
       avoidDuplicates: true,
       manual: false,
+      selector: {
+        content: '[role="tablist"] + *',
+        indicator: '[data-tabs-indicator]',
+        list: '[role="tablist"]',
+        panel: '[role="tabpanel"]',
+        tab: '[role="tab"]',
+      },
     };
     this.settings = {
       ...this.defaults,
       ...options,
-      selector: { ...this.defaults.selector, ...options?.selector },
       animation: {
-        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
         content: { ...this.defaults.animation.content, ...options?.animation?.content },
+        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
       },
+      selector: { ...this.defaults.selector, ...options?.selector },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;

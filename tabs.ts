@@ -1,25 +1,25 @@
 type TabsOptions = {
-  selector: {
-    list: string;
-    tab: string;
-    indicator: string;
-    content: string;
-    panel: string;
-  };
   animation: {
-    indicator: {
-      duration: number;
-      easing: string;
-    };
     content: {
       crossFade: boolean;
       duration: number;
       easing: string;
       fade: boolean;
     };
+    indicator: {
+      duration: number;
+      easing: string;
+    };
   };
   avoidDuplicates: boolean;
   manual: boolean;
+  selector: {
+    content: string;
+    indicator: string;
+    list: string;
+    panel: string;
+    tab: string;
+  };
 };
 
 export class Tabs {
@@ -40,6 +40,20 @@ export class Tabs {
     }
     this.rootElement = root;
     this.defaults = {
+      animation: {
+        content: {
+          crossFade: true,
+          duration: 300,
+          easing: 'ease',
+          fade: false,
+        },
+        indicator: {
+          duration: 300,
+          easing: 'ease',
+        },
+      },
+      avoidDuplicates: true,
+      manual: false,
       selector: {
         list: '[role="tablist"]',
         tab: '[role="tab"]',
@@ -47,29 +61,15 @@ export class Tabs {
         content: '[role="tablist"] + *',
         panel: '[role="tabpanel"]',
       },
-      animation: {
-        indicator: {
-          duration: 300,
-          easing: 'ease',
-        },
-        content: {
-          crossFade: true,
-          duration: 300,
-          easing: 'ease',
-          fade: false,
-        },
-      },
-      avoidDuplicates: true,
-      manual: false,
     };
     this.settings = {
       ...this.defaults,
       ...options,
-      selector: { ...this.defaults.selector, ...options?.selector },
       animation: {
-        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
         content: { ...this.defaults.animation.content, ...options?.animation?.content },
+        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
       },
+      selector: { ...this.defaults.selector, ...options?.selector },
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
