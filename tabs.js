@@ -121,7 +121,7 @@ export class Tabs {
   }
 
   isFocusable(element) {
-    return element.getAttribute('aria-hidden') !== 'true' && !element.disabled;
+    return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
   }
 
   handleTabClick(event) {

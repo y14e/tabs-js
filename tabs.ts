@@ -157,7 +157,7 @@ export class Tabs {
   }
 
   private isFocusable(element: HTMLElement): boolean {
-    return element.getAttribute('aria-hidden') !== 'true' && !element.disabled;
+    return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
   }
 
   private handleTabClick(event: MouseEvent): void {
