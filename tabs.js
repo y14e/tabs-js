@@ -17,7 +17,7 @@ export class Tabs {
           easing: 'ease',
         },
       },
-      avoidDuplicates: true,
+      avoidDuplicates: false,
       manual: false,
       selector: {
         content: '[role="tablist"] + *',
@@ -26,6 +26,7 @@ export class Tabs {
         panel: '[role="tabpanel"]',
         tab: '[role="tab"]',
       },
+      vertical: false,
     };
     this.settings = {
       ...this.defaults,
@@ -59,22 +60,25 @@ export class Tabs {
     }
     this.listElements.forEach((list, i) => {
       if (this.settings.avoidDuplicates && i) {
-        list.ariaHidden = 'true';
+        list.setAttribute('aria-hidden', 'true');
       }
-      list.role = 'tablist';
+      if (this.settings.vertical) {
+        list.setAttribute('aria-orientation', 'vertical');
+      }
+      list.setAttribute('role', 'tablist');
     });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
-      if (!tab.ariaSelected) {
-        tab.ariaSelected = 'false';
+      if (!tab.hasAttribute('aria-selected')) {
+        tab.setAttribute('aria-selected', 'false');
       }
       const duplicates = this.isDuplicates(tab);
       if (!this.settings.avoidDuplicates || !duplicates) {
-        tab.id ||= `tab-${id}`;
+        tab.id ||= `tabs-tab-${id}`;
       }
-      tab.role = 'tab';
-      tab.tabIndex = tab.ariaSelected === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? 0 : -1;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? '0' : '-1');
       if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
@@ -95,9 +99,9 @@ export class Tabs {
       });
     }
     this.panelElements.forEach(panel => {
-      panel.role = 'tabpanel';
-      if (!panel.hidden) {
-        panel.tabIndex = 0;
+      panel.setAttribute('role', 'tabpanel');
+      if (!panel.hasAttribute('hidden')) {
+        panel.setAttribute('tabindex', '0');
       }
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
     });
@@ -117,7 +121,7 @@ export class Tabs {
   }
 
   isFocusable(element) {
-    return element.ariaDisabled !== 'true' && !element.hasAttribute('disabled');
+    return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
   }
 
   handleTabClick(event) {
@@ -128,8 +132,8 @@ export class Tabs {
 
   handleTabKeyDown(event) {
     const list = event.currentTarget.closest(this.settings.selector.list);
-    const both = list.ariaOrientation === 'undefined';
-    const horizontal = list.ariaOrientation !== 'vertical';
+    const both = list.getAttribute('aria-orientation') === 'undefined';
+    const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
     if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) {
       return;
@@ -181,15 +185,15 @@ export class Tabs {
     if (!this.tabElements.includes(tab)) {
       return;
     }
-    if (tab.ariaSelected === 'true') {
+    if (tab.getAttribute('aria-selected') === 'true') {
       return;
     }
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {
       const selected = tab.getAttribute('aria-controls') === id;
-      tab.ariaSelected = String(selected);
-      tab.tabIndex = selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? 0 : -1;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1');
     });
     Object.assign(this.contentElement.style, {
       overflow: 'clip',
@@ -197,7 +201,7 @@ export class Tabs {
     });
     this.panelElements.forEach(panel => {
       if (panel.id === id) {
-        panel.tabIndex = 0;
+        panel.setAttribute('tabindex', '0');
       } else {
         panel.removeAttribute('tabindex');
       }
@@ -280,7 +284,7 @@ class TabsIndicator {
     if (!this.indicatorElement.checkVisibility()) {
       return;
     }
-    const horizontal = this.listElement.ariaOrientation !== 'vertical';
+    const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = horizontal ? 'inlineSize' : 'blockSize';
     const { x, y, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
