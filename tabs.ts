@@ -105,7 +105,7 @@ export class Tabs {
     });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
-      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tab-panel-${id}`));
+      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tabs-panel-${id}`));
       if (!tab.hasAttribute('aria-selected')) {
         tab.setAttribute('aria-selected', 'false');
       }
