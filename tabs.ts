@@ -23,7 +23,7 @@ type TabsOptions = {
   vertical: boolean;
 };
 
-export class Tabs {
+export default class Tabs {
   private rootElement!: HTMLElement;
   private defaults!: TabsOptions;
   private settings!: TabsOptions;

@@ -1,4 +1,4 @@
-export class Tabs {
+export default class Tabs {
   constructor(root, options) {
     if (!root) {
       return;
