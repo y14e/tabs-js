@@ -44,10 +44,13 @@ export default class Tabs {
     this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)];
     this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)];
     this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)];
+    this.indicatorInstances = [];
     this.contentElement = this.rootElement.querySelector(this.settings.selector.content);
     this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
+    this.eventController = new AbortController();
+    this.destroyed = false;
     this.handleTabClick = this.handleTabClick.bind(this);
     this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
     this.handlePanelBeforeMatch = this.handlePanelBeforeMatch.bind(this);
@@ -58,6 +61,7 @@ export default class Tabs {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
+    const { signal } = this.eventController;
     this.listElements.forEach((list, i) => {
       if (this.settings.avoidDuplicates && i) {
         list.setAttribute('aria-hidden', 'true');
@@ -84,8 +88,8 @@ export default class Tabs {
       }
       const panel = this.panelElements[i % this.panelElements.length];
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.id}`.trim());
-      tab.addEventListener('click', this.handleTabClick);
-      tab.addEventListener('keydown', this.handleTabKeyDown);
+      tab.addEventListener('click', this.handleTabClick, { signal });
+      tab.addEventListener('keydown', this.handleTabKeyDown, { signal });
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
@@ -95,7 +99,7 @@ export default class Tabs {
           display: 'block',
           position: 'absolute',
         });
-        new TabsIndicator(indicator, list, this.settings);
+        this.indicatorInstances.push(new TabsIndicator(indicator, list, this.settings));
       });
     }
     this.panelElements.forEach(panel => {
@@ -103,7 +107,7 @@ export default class Tabs {
       if (!panel.hasAttribute('hidden')) {
         panel.setAttribute('tabindex', '0');
       }
-      panel.addEventListener('beforematch', this.handlePanelBeforeMatch);
+      panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
@@ -223,9 +227,7 @@ export default class Tabs {
         panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
       }
     });
-    if (this.contentAnimation) {
-      this.contentAnimation.cancel();
-    }
+    this.contentAnimation?.cancel();
     this.contentAnimation = this.contentElement.animate(
       {
         blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')],
@@ -246,9 +248,7 @@ export default class Tabs {
         let animation = this.panelAnimations[i];
         const selected = panel.id === id;
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
-        if (animation) {
-          animation.cancel();
-        }
+        animation?.cancel();
         animation = this.panelAnimations[i] = panel.animate(
           {
             opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'],
@@ -265,6 +265,21 @@ export default class Tabs {
       });
     }
   }
+
+  destroy() {
+    if (this.destroyed) {
+      return;
+    }
+    this.rootElement.removeAttribute('data-tabs-initialized');
+    this.indicatorInstances.forEach(indicator => indicator.destroy());
+    this.indicatorInstances = [];
+    this.contentAnimation?.cancel();
+    this.contentAnimation = null;
+    this.panelAnimations.forEach(animation => animation?.cancel());
+    this.panelAnimations = [];
+    this.eventController.abort();
+    this.destroyed = true;
+  }
 }
 
 class TabsIndicator {
@@ -272,9 +287,11 @@ class TabsIndicator {
     this.indicatorElement = indicator;
     this.listElement = list;
     this.settings = settings;
-    const update = this.update.bind(this);
-    new ResizeObserver(update).observe(this.listElement);
-    new MutationObserver(update).observe(this.listElement, {
+    this.update = this.update.bind(this);
+    this.resizeObserver = new ResizeObserver(this.update);
+    this.resizeObserver.observe(this.listElement);
+    this.mutationObserver = new MutationObserver(this.update);
+    this.mutationObserver.observe(this.listElement, {
       attributeFilter: ['aria-selected'],
       subtree: true,
     });
@@ -300,5 +317,10 @@ class TabsIndicator {
         fill: 'forwards',
       },
     );
+  }
+
+  destroy() {
+    this.resizeObserver.disconnect();
+    this.mutationObserver.disconnect();
   }
 }
