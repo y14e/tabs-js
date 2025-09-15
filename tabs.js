@@ -273,10 +273,6 @@ export default class Tabs {
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.indicatorInstances.forEach(indicator => indicator.destroy());
     this.indicatorInstances = [];
-    this.contentAnimation?.cancel();
-    this.contentAnimation = null;
-    this.panelAnimations.forEach(animation => animation?.cancel());
-    this.panelAnimations = [];
     this.eventController.abort();
     this.destroyed = true;
   }
