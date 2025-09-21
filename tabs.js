@@ -45,7 +45,11 @@ export default class Tabs {
     this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)];
     this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)];
     this.indicatorInstances = [];
-    this.contentElement = this.rootElement.querySelector(this.settings.selector.content);
+    const content = this.rootElement.querySelector(this.settings.selector.content);
+    if (!content) {
+      return;
+    }
+    this.contentElement = content;
     this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
@@ -95,7 +99,7 @@ export default class Tabs {
       this.indicatorElements.forEach(indicator => {
         const list = indicator.closest(this.settings.selector.list);
         if (!(list instanceof HTMLElement)) {
-          return;
+          throw new TypeError();
         }
         list.style.setProperty('position', 'relative');
         Object.assign(indicator.style, {
@@ -136,7 +140,7 @@ export default class Tabs {
     event.stopPropagation();
     const tab = event.currentTarget;
     if (!(tab instanceof HTMLElement)) {
-      return;
+      throw new TypeError();
     }
     this.activate(tab);
   }
@@ -144,9 +148,12 @@ export default class Tabs {
   handleTabKeyDown(event) {
     const tab = event.currentTarget;
     if (!(tab instanceof HTMLElement)) {
-      return;
+      throw new TypeError();
     }
     const list = tab.closest(this.settings.selector.list);
+    if (!list) {
+      return;
+    }
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
@@ -163,7 +170,7 @@ export default class Tabs {
       return;
     }
     const currentIndex = focusables.indexOf(current);
-    let newIndex;
+    let newIndex = currentIndex;
     switch (key) {
       case 'Enter':
       case ' ':
@@ -195,9 +202,13 @@ export default class Tabs {
   handlePanelBeforeMatch(event) {
     const panel = event.currentTarget;
     if (!(panel instanceof HTMLElement)) {
-      return;
+      throw new TypeError();
     }
-    this.activate(this.rootElement.querySelector(`[aria-controls="${panel.id}"]`), true);
+    const tab = this.rootElement.querySelector(`[aria-controls="${panel.id}"]`);
+    if (!(tab instanceof HTMLElement)) {
+      throw new TypeError();
+    }
+    this.activate(tab, true);
   }
 
   activate(tab, match = false) {
@@ -231,7 +242,11 @@ export default class Tabs {
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
     });
-    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)).getPropertyValue('block-size'));
+    const panel = this.panelElements.find(panel => !panel.hidden);
+    if (!panel) {
+      return;
+    }
+    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(panel).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -240,9 +255,13 @@ export default class Tabs {
       }
     });
     this.contentAnimation?.cancel();
+    const _panel = this.rootElement.querySelector(`#${id}`);
+    if (!_panel) {
+      return;
+    }
     this.contentAnimation = this.contentElement.animate(
       {
-        blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')],
+        blockSize: [`${size}px`, window.getComputedStyle(_panel).getPropertyValue('block-size')],
       },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
@@ -312,7 +331,11 @@ class TabsIndicator {
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = horizontal ? 'inlineSize' : 'blockSize';
-    const { x, y, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    const tab = this.listElement.querySelector('[aria-selected="true"]');
+    if (!tab) {
+      return;
+    }
+    const { x, y, width, height } = tab.getBoundingClientRect();
     const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
     this.indicatorElement.animate(
       {
