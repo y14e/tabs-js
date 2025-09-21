@@ -80,12 +80,12 @@ export default class Tabs {
       this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
-    this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)] as HTMLElement[];
-    this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)] as HTMLElement[];
-    this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)] as HTMLElement[];
+    this.listElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.list}${NOT_NESTED}`)];
+    this.tabElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.tab}${NOT_NESTED}`)];
+    this.indicatorElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.indicator}${NOT_NESTED}`)];
     this.indicatorInstances = [];
-    this.contentElement = this.rootElement.querySelector(this.settings.selector.content) as HTMLElement;
-    this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)] as HTMLElement[];
+    this.contentElement = this.rootElement.querySelector<HTMLElement>(this.settings.selector.content)!;
+    this.panelElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
     this.eventController = new AbortController();
@@ -132,7 +132,10 @@ export default class Tabs {
     });
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
-        const list = indicator.closest(this.settings.selector.list) as HTMLElement;
+        const list = indicator.closest(this.settings.selector.list);
+        if (!(list instanceof HTMLElement)) {
+          return;
+        }
         list.style.setProperty('position', 'relative');
         Object.assign(indicator.style, {
           display: 'block',
@@ -153,7 +156,7 @@ export default class Tabs {
 
   private getActiveElement(): HTMLElement | null {
     let active: Element | null = document.activeElement;
-    while (active instanceof HTMLElement && active.shadowRoot?.activeElement) {
+    while (active && active.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
     }
     return active instanceof HTMLElement ? active : null;
@@ -170,11 +173,19 @@ export default class Tabs {
   private handleTabClick(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.activate(event.currentTarget as HTMLElement);
+    const tab = event.currentTarget;
+    if (!(tab instanceof HTMLElement)) {
+      return;
+    }
+    this.activate(tab);
   }
 
   private handleTabKeyDown(event: KeyboardEvent): void {
-    const list = (event.currentTarget as HTMLElement).closest(this.settings.selector.list) as HTMLElement;
+    const tab = event.currentTarget;
+    if (!(tab instanceof HTMLElement)) {
+      return;
+    }
+    const list = tab.closest(this.settings.selector.list)!;
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
@@ -183,7 +194,7 @@ export default class Tabs {
     }
     event.preventDefault();
     event.stopPropagation();
-    const focusables = ([...list.querySelectorAll(this.settings.selector.tab)] as HTMLElement[]).filter(this.isFocusable);
+    const focusables = [...list.querySelectorAll<HTMLElement>(this.settings.selector.tab)].filter(this.isFocusable);
     const length = focusables.length;
     const active = this.getActiveElement();
     const current = active instanceof HTMLElement ? active : null;
@@ -212,23 +223,24 @@ export default class Tabs {
         newIndex = (currentIndex + 1) % length;
         break;
     }
-    const tab = focusables[newIndex];
-    tab.focus();
+    const focusable = focusables[newIndex];
+    focusable.focus();
     if (this.settings.manual) {
       return;
     }
-    tab.click();
+    focusable.click();
   }
 
   private handlePanelBeforeMatch(event: Event): void {
-    this.activate(this.rootElement.querySelector(`[aria-controls="${(event.currentTarget as HTMLElement).id}"]`) as HTMLElement, true);
+    const panel = event.currentTarget;
+    if (!(panel instanceof HTMLElement)) {
+      return;
+    }
+    this.activate(this.rootElement.querySelector(`[aria-controls="${panel.id}"]`)!, true);
   }
 
   activate(tab: HTMLElement, match = false): void {
-    if (!this.tabElements.includes(tab)) {
-      return;
-    }
-    if (tab.getAttribute('aria-selected') === 'true') {
+    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') {
       return;
     }
     this.rootElement.setAttribute('data-tabs-animating', '');

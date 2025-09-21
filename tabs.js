@@ -94,6 +94,9 @@ export default class Tabs {
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
         const list = indicator.closest(this.settings.selector.list);
+        if (!(list instanceof HTMLElement)) {
+          return;
+        }
         list.style.setProperty('position', 'relative');
         Object.assign(indicator.style, {
           display: 'block',
@@ -114,7 +117,7 @@ export default class Tabs {
 
   getActiveElement() {
     let active = document.activeElement;
-    while (active instanceof HTMLElement && active.shadowRoot?.activeElement) {
+    while (active && active.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
     }
     return active instanceof HTMLElement ? active : null;
@@ -131,11 +134,19 @@ export default class Tabs {
   handleTabClick(event) {
     event.preventDefault();
     event.stopPropagation();
-    this.activate(event.currentTarget);
+    const tab = event.currentTarget;
+    if (!(tab instanceof HTMLElement)) {
+      return;
+    }
+    this.activate(tab);
   }
 
   handleTabKeyDown(event) {
-    const list = event.currentTarget.closest(this.settings.selector.list);
+    const tab = event.currentTarget;
+    if (!(tab instanceof HTMLElement)) {
+      return;
+    }
+    const list = tab.closest(this.settings.selector.list);
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
@@ -173,23 +184,24 @@ export default class Tabs {
         newIndex = (currentIndex + 1) % length;
         break;
     }
-    const tab = focusables[newIndex];
-    tab.focus();
+    const focusable = focusables[newIndex];
+    focusable.focus();
     if (this.settings.manual) {
       return;
     }
-    tab.click();
+    focusable.click();
   }
 
   handlePanelBeforeMatch(event) {
-    this.activate(this.rootElement.querySelector(`[aria-controls="${event.currentTarget.id}"]`), true);
+    const panel = event.currentTarget;
+    if (!(panel instanceof HTMLElement)) {
+      return;
+    }
+    this.activate(this.rootElement.querySelector(`[aria-controls="${panel.id}"]`), true);
   }
 
   activate(tab, match = false) {
-    if (!this.tabElements.includes(tab)) {
-      return;
-    }
-    if (tab.getAttribute('aria-selected') === 'true') {
+    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') {
       return;
     }
     this.rootElement.setAttribute('data-tabs-animating', '');
