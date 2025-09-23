@@ -45,11 +45,7 @@ export default class Tabs {
     this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)];
     this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)];
     this.indicatorInstances = [];
-    const content = this.rootElement.querySelector(this.settings.selector.content);
-    if (!content) {
-      return;
-    }
-    this.contentElement = content;
+    this.contentElement = this.rootElement.querySelector(this.settings.selector.content);
     this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
@@ -98,9 +94,6 @@ export default class Tabs {
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach(indicator => {
         const list = indicator.closest(this.settings.selector.list);
-        if (!(list instanceof HTMLElement)) {
-          throw new TypeError();
-        }
         list.style.setProperty('position', 'relative');
         Object.assign(indicator.style, {
           display: 'block',
@@ -124,7 +117,7 @@ export default class Tabs {
     while (active && active.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
     }
-    return active instanceof HTMLElement ? active : null;
+    return active;
   }
 
   isDuplicates(tab) {
@@ -138,22 +131,11 @@ export default class Tabs {
   handleTabClick(event) {
     event.preventDefault();
     event.stopPropagation();
-    const tab = event.currentTarget;
-    if (!(tab instanceof HTMLElement)) {
-      throw new TypeError();
-    }
-    this.activate(tab);
+    this.activate(event.currentTarget);
   }
 
   handleTabKeyDown(event) {
-    const tab = event.currentTarget;
-    if (!(tab instanceof HTMLElement)) {
-      throw new TypeError();
-    }
-    const list = tab.closest(this.settings.selector.list);
-    if (!list) {
-      return;
-    }
+    const list = event.currentTarget.closest(this.settings.selector.list);
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
@@ -165,16 +147,12 @@ export default class Tabs {
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
     const length = focusables.length;
     const active = this.getActiveElement();
-    const current = active instanceof HTMLElement ? active : null;
-    if (!current) {
-      return;
-    }
-    const currentIndex = focusables.indexOf(current);
+    const currentIndex = focusables.indexOf(active);
     let newIndex = currentIndex;
     switch (key) {
       case 'Enter':
       case ' ':
-        current.click();
+        active.click();
         return;
       case 'End':
         newIndex = length - 1;
@@ -191,24 +169,15 @@ export default class Tabs {
         newIndex = (currentIndex + 1) % length;
         break;
     }
-    const focusable = focusables[newIndex];
-    focusable.focus();
-    if (this.settings.manual) {
-      return;
+    const tab = focusables[newIndex];
+    tab.focus();
+    if (!this.settings.manual) {
+      tab.click();
     }
-    focusable.click();
   }
 
   handlePanelBeforeMatch(event) {
-    const panel = event.currentTarget;
-    if (!(panel instanceof HTMLElement)) {
-      throw new TypeError();
-    }
-    const tab = this.rootElement.querySelector(`[aria-controls="${panel.id}"]`);
-    if (!(tab instanceof HTMLElement)) {
-      throw new TypeError();
-    }
-    this.activate(tab, true);
+    this.activate(this.rootElement.querySelector(`[aria-controls="${event.currentTarget.id}"]`), true);
   }
 
   activate(tab, match = false) {
@@ -242,11 +211,7 @@ export default class Tabs {
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
     });
-    const panel = this.panelElements.find(panel => !panel.hidden);
-    if (!panel) {
-      return;
-    }
-    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(panel).getPropertyValue('block-size'));
+    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -255,13 +220,9 @@ export default class Tabs {
       }
     });
     this.contentAnimation?.cancel();
-    const _panel = this.rootElement.querySelector(`#${id}`);
-    if (!_panel) {
-      return;
-    }
     this.contentAnimation = this.contentElement.animate(
       {
-        blockSize: [`${size}px`, window.getComputedStyle(_panel).getPropertyValue('block-size')],
+        blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')],
       },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
@@ -331,11 +292,7 @@ class TabsIndicator {
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = horizontal ? 'inlineSize' : 'blockSize';
-    const tab = this.listElement.querySelector('[aria-selected="true"]');
-    if (!tab) {
-      return;
-    }
-    const { x, y, width, height } = tab.getBoundingClientRect();
+    const { x, y, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
     const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
     this.indicatorElement.animate(
       {
