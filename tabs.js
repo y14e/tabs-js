@@ -221,9 +221,7 @@ export default class Tabs {
     });
     this.contentAnimation?.cancel();
     this.contentAnimation = this.contentElement.animate(
-      {
-        blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')],
-      },
+      { blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')] },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
         easing: this.settings.animation.content.easing,
@@ -242,9 +240,7 @@ export default class Tabs {
         const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
         animation?.cancel();
         animation = this.panelAnimations[i] = panel.animate(
-          {
-            opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'],
-          },
+          { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
           {
             duration: !match ? this.settings.animation.content.duration : 0,
             easing: 'ease',
