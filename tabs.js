@@ -1,8 +1,6 @@
 export default class Tabs {
   constructor(root, options) {
-    if (!root) {
-      return;
-    }
+    if (!root) return;
     this.rootElement = root;
     this.defaults = {
       animation: {
@@ -37,9 +35,7 @@ export default class Tabs {
       },
       selector: { ...this.defaults.selector, ...options?.selector },
     };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.list}${NOT_NESTED}`)];
     this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)];
@@ -58,34 +54,22 @@ export default class Tabs {
   }
 
   initialize() {
-    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
-      return;
-    }
+    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
     const { signal } = this.eventController;
     this.listElements.forEach((list, i) => {
-      if (this.settings.avoidDuplicates && i) {
-        list.setAttribute('aria-hidden', 'true');
-      }
-      if (this.settings.vertical) {
-        list.setAttribute('aria-orientation', 'vertical');
-      }
+      if (this.settings.avoidDuplicates && i) list.setAttribute('aria-hidden', 'true');
+      if (this.settings.vertical) list.setAttribute('aria-orientation', 'vertical');
       list.setAttribute('role', 'tablist');
     });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tabs-panel-${id}`));
-      if (!tab.hasAttribute('aria-selected')) {
-        tab.setAttribute('aria-selected', 'false');
-      }
+      if (!tab.hasAttribute('aria-selected')) tab.setAttribute('aria-selected', 'false');
       const duplicates = this.isDuplicates(tab);
-      if (!this.settings.avoidDuplicates || !duplicates) {
-        tab.id ||= `tabs-tab-${id}`;
-      }
+      if (!this.settings.avoidDuplicates || !duplicates) tab.id ||= `tabs-tab-${id}`;
       tab.setAttribute('role', 'tab');
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? '0' : '-1');
-      if (!this.isFocusable(tab)) {
-        tab.style.setProperty('pointer-events', 'none');
-      }
+      if (!this.isFocusable(tab)) tab.style.setProperty('pointer-events', 'none');
       const panel = this.panelElements[i % this.panelElements.length];
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.id}`.trim());
       tab.addEventListener('click', this.handleTabClick, { signal });
@@ -104,9 +88,7 @@ export default class Tabs {
     }
     this.panelElements.forEach(panel => {
       panel.setAttribute('role', 'tabpanel');
-      if (!panel.hasAttribute('hidden')) {
-        panel.setAttribute('tabindex', '0');
-      }
+      if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
@@ -114,9 +96,7 @@ export default class Tabs {
 
   getActiveElement() {
     let active = document.activeElement;
-    while (active && active.shadowRoot?.activeElement) {
-      active = active.shadowRoot.activeElement;
-    }
+    while (active && active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
   }
 
@@ -139,9 +119,7 @@ export default class Tabs {
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
-    if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) {
-      return;
-    }
+    if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) return;
     event.preventDefault();
     event.stopPropagation();
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
@@ -171,9 +149,7 @@ export default class Tabs {
     }
     const tab = focusables[newIndex];
     tab.focus();
-    if (!this.settings.manual) {
-      tab.click();
-    }
+    if (!this.settings.manual) tab.click();
   }
 
   handlePanelBeforeMatch(event) {
@@ -181,9 +157,7 @@ export default class Tabs {
   }
 
   activate(tab, match = false) {
-    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') {
-      return;
-    }
+    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach(tab => {
@@ -255,9 +229,7 @@ export default class Tabs {
   }
 
   destroy() {
-    if (this.destroyed) {
-      return;
-    }
+    if (this.destroyed) return;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.indicatorInstances.forEach(indicator => indicator.destroy());
     this.indicatorInstances = [];
@@ -282,9 +254,7 @@ class TabsIndicator {
   }
 
   update() {
-    if (!this.indicatorElement.checkVisibility()) {
-      return;
-    }
+    if (!this.indicatorElement.checkVisibility()) return;
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
     const size = horizontal ? 'inlineSize' : 'blockSize';
