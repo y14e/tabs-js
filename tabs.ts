@@ -127,7 +127,7 @@ export default class Tabs {
     }
     this.panelElements.forEach(panel => {
       panel.setAttribute('role', 'tabpanel');
-      if (!panel.hasAttribute('hidden')) panel.setAttribute('tabindex', '0');
+      if (!panel.hasAttribute('hidden') && !this.hasFocusableElement(panel)) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
     });
     this.rootElement.setAttribute('data-tabs-initialized', '');
@@ -137,6 +137,10 @@ export default class Tabs {
     let active = document.activeElement;
     while (active && active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active as HTMLElement | null;
+  }
+
+  hasFocusableElement(element: HTMLElement): boolean {
+    return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter(element => element.checkVisibility()).length;
   }
 
   private isDuplicates(tab: HTMLElement): boolean {
@@ -209,11 +213,6 @@ export default class Tabs {
       position: 'relative',
     });
     this.panelElements.forEach(panel => {
-      if (panel.id === id) {
-        panel.setAttribute('tabindex', '0');
-      } else {
-        panel.removeAttribute('tabindex');
-      }
       if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
         Object.assign(panel.style, {
           contentVisibility: 'visible',
@@ -223,6 +222,11 @@ export default class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
+      if (panel.id === id && !this.hasFocusableElement(panel)) {
+        panel.setAttribute('tabindex', '0');
+      } else {
+        panel.removeAttribute('tabindex');
+      }
     });
     const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)!).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
