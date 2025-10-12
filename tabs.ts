@@ -139,7 +139,7 @@ export default class Tabs {
     return active as HTMLElement | null;
   }
 
-  hasFocusableElement(element: HTMLElement): boolean {
+  private hasFocusableElement(element: HTMLElement): boolean {
     return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter(element => element.checkVisibility()).length;
   }
 
