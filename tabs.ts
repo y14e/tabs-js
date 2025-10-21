@@ -1,4 +1,4 @@
-type TabsOptions = {
+interface TabsOptions {
   animation: {
     content: {
       crossFade: boolean;
@@ -21,7 +21,7 @@ type TabsOptions = {
     tab: string;
   };
   vertical: boolean;
-};
+}
 
 export default class Tabs {
   private rootElement!: HTMLElement;
