@@ -115,7 +115,7 @@ export default class Tabs {
       tab.addEventListener('keydown', this.handleTabKeyDown, { signal });
     });
     if (this.indicatorElements.length) {
-      this.indicatorElements.forEach(indicator => {
+      this.indicatorElements.forEach((indicator) => {
         const list = indicator.closest(this.settings.selector.list) as HTMLElement;
         list.style.setProperty('position', 'relative');
         Object.assign(indicator.style, {
@@ -125,7 +125,7 @@ export default class Tabs {
         this.indicatorInstances.push(new TabsIndicator(indicator, list, this.settings));
       });
     }
-    this.panelElements.forEach(panel => {
+    this.panelElements.forEach((panel) => {
       panel.setAttribute('role', 'tabpanel');
       if (!panel.hasAttribute('hidden') && !this.hasFocusableElement(panel)) panel.setAttribute('tabindex', '0');
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
@@ -140,7 +140,7 @@ export default class Tabs {
   }
 
   private hasFocusableElement(element: HTMLElement): boolean {
-    return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter(element => element.checkVisibility()).length;
+    return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((element) => element.checkVisibility()).length;
   }
 
   private isDuplicates(tab: HTMLElement): boolean {
@@ -203,7 +203,7 @@ export default class Tabs {
     if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
-    this.tabElements.forEach(tab => {
+    this.tabElements.forEach((tab) => {
       const selected = tab.getAttribute('aria-controls') === id;
       tab.setAttribute('aria-selected', String(selected));
       tab.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1');
@@ -212,7 +212,7 @@ export default class Tabs {
       overflow: 'clip',
       position: 'relative',
     });
-    this.panelElements.forEach(panel => {
+    this.panelElements.forEach((panel) => {
       if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
         Object.assign(panel.style, {
           contentVisibility: 'visible',
@@ -228,7 +228,7 @@ export default class Tabs {
         panel.removeAttribute('tabindex');
       }
     });
-    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find(panel => !panel.hidden)!).getPropertyValue('block-size'));
+    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find((panel) => !panel.hidden)!).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -247,8 +247,8 @@ export default class Tabs {
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['block-size', 'overflow', 'position'].forEach(name => this.contentElement.style.removeProperty(name));
-      this.panelElements.forEach(panel => ['content-visibility', 'display', 'position', 'width'].forEach(name => panel.style.removeProperty(name)));
+      ['block-size', 'overflow', 'position'].forEach((name) => this.contentElement.style.removeProperty(name));
+      this.panelElements.forEach((panel) => ['content-visibility', 'display', 'position', 'width'].forEach((name) => panel.style.removeProperty(name)));
     });
     if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
       this.panelElements.forEach((panel, i) => {
@@ -274,7 +274,7 @@ export default class Tabs {
   destroy() {
     if (this.destroyed) return;
     this.rootElement.removeAttribute('data-tabs-initialized');
-    this.indicatorInstances.forEach(indicator => indicator.destroy());
+    this.indicatorInstances.forEach((indicator) => indicator.destroy());
     this.indicatorInstances = [];
     this.eventController.abort();
     this.destroyed = true;
