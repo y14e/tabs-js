@@ -215,7 +215,7 @@ export default class Tabs {
         panel.removeAttribute('tabindex');
       }
     });
-    const size = parseInt(window.getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(window.getComputedStyle(this.panelElements.find((panel) => !panel.hidden)).getPropertyValue('block-size'));
+    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(getComputedStyle(this.panelElements.find((panel) => !panel.hidden)).getPropertyValue('block-size'));
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -225,7 +225,7 @@ export default class Tabs {
     });
     this.contentAnimation?.cancel();
     this.contentAnimation = this.contentElement.animate(
-      { blockSize: [`${size}px`, window.getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')] },
+      { blockSize: [`${size}px`, getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')] },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
         easing: this.settings.animation.content.easing,
@@ -241,7 +241,7 @@ export default class Tabs {
       this.panelElements.forEach((panel, i) => {
         let animation = this.panelAnimations[i];
         const selected = panel.id === id;
-        const opacity = window.getComputedStyle(panel).getPropertyValue('opacity');
+        const opacity = getComputedStyle(panel).getPropertyValue('opacity');
         animation?.cancel();
         animation = this.panelAnimations[i] = panel.animate(
           { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
