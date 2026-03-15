@@ -76,7 +76,7 @@ export default class Tabs {
       },
       selector: { ...this.defaults.selector, ...options?.selector },
     };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
