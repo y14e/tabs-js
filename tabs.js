@@ -290,8 +290,8 @@ class TabsIndicator {
       return;
     }
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
-    const position = horizontal ? 'insetInlineStart' : 'insetBlockStart';
-    const size = horizontal ? 'inlineSize' : 'blockSize';
+    const position = `inset${horizontal ? 'Inline' : 'Block'}Start`;
+    const size = `${horizontal ? 'inline' : 'block'}Size`;
     const { x: tabX, y: tabY, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
     const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
     this.indicatorElement.animate(
