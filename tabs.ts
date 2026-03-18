@@ -297,15 +297,36 @@ export default class Tabs {
     }
   }
 
-  destroy() {
+  async destroy() {
     if (this.destroyed) {
       return;
     }
+    this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.indicatorInstances.forEach((indicator) => indicator.destroy());
     this.indicatorInstances = [];
+    const contentAnimation = this.contentAnimation;
+    if (contentAnimation) {
+      try {
+        await contentAnimation.finished;
+      } catch {}
+      contentAnimation.cancel();
+    }
+    const panelAnimations = this.panelAnimations.filter(Boolean);
+    if (panelAnimations.length) {
+      await Promise.all(
+        panelAnimations.map(async (animation) => {
+          if (animation) {
+            try {
+              await animation.finished;
+            } catch {}
+            animation.cancel();
+          }
+        }),
+      );
+    }
+    this.panelAnimations = [];
     this.eventController.abort();
-    this.destroyed = true;
   }
 }
 
@@ -313,6 +334,7 @@ class TabsIndicator {
   private indicatorElement: HTMLElement;
   private listElement: HTMLElement;
   private settings: TabsOptions;
+  private animation: Animation | null;
   private resizeObserver: ResizeObserver;
   private mutationObserver: MutationObserver;
 
@@ -321,6 +343,7 @@ class TabsIndicator {
     this.listElement = list;
     this.settings = settings;
     this.update = this.update.bind(this);
+    this.animation = null;
     this.resizeObserver = new ResizeObserver(this.update);
     this.resizeObserver.observe(this.listElement);
     this.mutationObserver = new MutationObserver(this.update);
@@ -339,7 +362,7 @@ class TabsIndicator {
     const size = `${horizontal ? 'inline' : 'block'}Size`;
     const { x: tabX, y: tabY, width, height } = this.listElement.querySelector('[aria-selected="true"]')!.getBoundingClientRect();
     const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
-    this.indicatorElement.animate(
+    this.animation = this.indicatorElement.animate(
       {
         [position]: `${horizontal ? tabX - listX : tabY - listY}px`,
         [size]: `${horizontal ? width : height}px`,
@@ -352,7 +375,14 @@ class TabsIndicator {
     );
   }
 
-  destroy() {
+  async destroy() {
+    const animation = this.animation;
+    if (animation) {
+      try {
+        await animation.finished;
+      } catch {}
+      animation.cancel();
+    }
     this.resizeObserver.disconnect();
     this.mutationObserver.disconnect();
   }
