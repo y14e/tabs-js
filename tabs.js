@@ -273,20 +273,17 @@ export default class Tabs {
       } catch {}
       contentAnimation.cancel();
     }
-    const panelAnimations = this.panelAnimations.filter(Boolean);
-    if (panelAnimations.length) {
-      await Promise.all(
-        panelAnimations.map(async (animation) => {
-          if (animation) {
-            try {
-              await animation.finished;
-            } catch {}
-            animation.cancel();
-          }
-        }),
-      );
-    }
-    this.panelAnimations = [];
+    await Promise.all(
+      this.panelAnimations.map(async (animation) => {
+        if (!animation) {
+          return;
+        }
+        try {
+          await animation.finished;
+        } catch {}
+        animation.cancel();
+      }),
+    );
     this.eventController.abort();
   }
 }
