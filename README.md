@@ -1,5 +1,5 @@
 # tabs.js
-WAI-ARIA compliant tabs pattern implementation in JS.
+WAI-ARIA compliant [tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) pattern implementation in JS.
 ## Installation
 ```js
 import Tabs from './tabs.js';
