@@ -372,7 +372,7 @@ class TabsIndicator {
     );
   }
 
-  async destroy() {
+  async destroy(): Promise<void> {
     const animation = this.animation;
     if (animation) {
       try {
