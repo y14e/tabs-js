@@ -304,7 +304,6 @@ export default class Tabs {
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.indicatorInstances.forEach((indicator) => indicator.destroy());
-    this.indicatorInstances = [];
     const contentAnimation = this.contentAnimation;
     if (contentAnimation) {
       try {
