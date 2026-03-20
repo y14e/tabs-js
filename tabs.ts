@@ -35,7 +35,7 @@ export default class Tabs {
   private panelElements!: HTMLElement[];
   private contentAnimation!: Animation | null;
   private panelAnimations!: (Animation | null)[];
-  private eventController!: AbortController;
+  private controller!: AbortController;
   private destroyed!: boolean;
 
   constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
@@ -88,7 +88,7 @@ export default class Tabs {
     this.panelElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
-    this.eventController = new AbortController();
+    this.controller = new AbortController();
     this.destroyed = false;
     this.handleTabClick = this.handleTabClick.bind(this);
     this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
@@ -100,7 +100,7 @@ export default class Tabs {
     if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
       return;
     }
-    const { signal } = this.eventController;
+    const { signal } = this.controller;
     this.listElements.forEach((list, i) => {
       if (this.settings.avoidDuplicates && i) {
         list.setAttribute('aria-hidden', 'true');
@@ -303,6 +303,7 @@ export default class Tabs {
     }
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
+    this.controller.abort();
     this.indicatorInstances.forEach((indicator) => indicator.destroy());
     const contentAnimation = this.contentAnimation;
     if (contentAnimation) {
@@ -322,7 +323,6 @@ export default class Tabs {
         animation.cancel();
       }),
     );
-    this.eventController.abort();
   }
 }
 
@@ -338,8 +338,8 @@ class TabsIndicator {
     this.indicatorElement = indicator;
     this.listElement = list;
     this.settings = settings;
-    this.update = this.update.bind(this);
     this.animation = null;
+    this.update = this.update.bind(this);
     this.resizeObserver = new ResizeObserver(this.update);
     this.resizeObserver.observe(this.listElement);
     this.mutationObserver = new MutationObserver(this.update);
