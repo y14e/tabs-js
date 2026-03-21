@@ -297,32 +297,28 @@ export default class Tabs {
     }
   }
 
-  async destroy() {
+  async destroy(force = false): Promise<void> {
     if (this.destroyed) {
       return;
     }
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.controller.abort();
-    this.indicatorInstances.forEach((indicator) => indicator.destroy());
+    this.indicatorInstances.forEach((indicator) => indicator.destroy(force));
     const contentAnimation = this.contentAnimation;
     if (contentAnimation) {
-      try {
-        await contentAnimation.finished;
-      } catch {}
+      if (!force) {
+        try {
+          await contentAnimation.finished;
+        } catch {}
+      }
       contentAnimation.cancel();
     }
-    await Promise.all(
-      this.panelAnimations.map(async (animation) => {
-        if (!animation) {
-          return;
-        }
-        try {
-          await animation.finished;
-        } catch {}
-        animation.cancel();
-      }),
-    );
+    const panelAnimations = this.panelAnimations;
+    if (!force) {
+      await Promise.all(panelAnimations.map((animation) => animation?.finished.catch(() => {})));
+    }
+    panelAnimations.forEach((animation) => animation?.cancel());
   }
 }
 
@@ -371,12 +367,14 @@ class TabsIndicator {
     );
   }
 
-  async destroy(): Promise<void> {
+  async destroy(force = false): Promise<void> {
     const animation = this.animation;
     if (animation) {
-      try {
-        await animation.finished;
-      } catch {}
+      if (!force) {
+        try {
+          await animation.finished;
+        } catch {}
+      }
       animation.cancel();
     }
     this.resizeObserver.disconnect();
