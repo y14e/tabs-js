@@ -368,6 +368,8 @@ class TabsIndicator {
   }
 
   async destroy(force = false): Promise<void> {
+    this.resizeObserver.disconnect();
+    this.mutationObserver.disconnect();
     const animation = this.animation;
     if (animation) {
       if (!force) {
@@ -377,7 +379,5 @@ class TabsIndicator {
       }
       animation.cancel();
     }
-    this.resizeObserver.disconnect();
-    this.mutationObserver.disconnect();
   }
 }
