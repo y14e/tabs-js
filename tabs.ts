@@ -38,7 +38,7 @@ export default class Tabs {
   private controller!: AbortController;
   private destroyed!: boolean;
 
-  constructor(root: HTMLElement, options?: Partial<TabsOptions>) {
+  constructor(root: HTMLElement, options: Partial<TabsOptions> = {}) {
     if (!root) {
       return;
     }
@@ -71,10 +71,10 @@ export default class Tabs {
       ...this.defaults,
       ...options,
       animation: {
-        content: { ...this.defaults.animation.content, ...options?.animation?.content },
-        indicator: { ...this.defaults.animation.indicator, ...options?.animation?.indicator },
+        content: { ...this.defaults.animation.content, ...options.animation?.content },
+        indicator: { ...this.defaults.animation.indicator, ...options.animation?.indicator },
       },
-      selector: { ...this.defaults.selector, ...options?.selector },
+      selector: { ...this.defaults.selector, ...options.selector },
     };
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.settings.animation.indicator.duration = this.settings.animation.content.duration = 0;
