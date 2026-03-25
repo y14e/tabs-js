@@ -87,7 +87,7 @@ export default class Tabs {
         tab.style.setProperty('pointer-events', 'none');
       }
       const panel = this.panelElements[i % this.panelElements.length];
-      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') || ''} ${tab.id}`.trim());
+      panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') ?? ''} ${tab.id}`.trim());
       tab.addEventListener('click', this.handleTabClick, { signal });
       tab.addEventListener('keydown', this.handleTabKeyDown, { signal });
     });
