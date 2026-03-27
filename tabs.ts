@@ -134,10 +134,8 @@ export default class Tabs {
       this.indicatorElements.forEach((indicator) => {
         const list = indicator.closest(this.settings.selector.list) as HTMLElement;
         list.style.setProperty('position', 'relative');
-        Object.assign(indicator.style, {
-          display: 'block',
-          position: 'absolute',
-        });
+        indicator.style.setProperty('display', 'block');
+        indicator.style.setProperty('position', 'absolute');
         this.indicatorInstances.push(new TabsIndicator(indicator, list, this.settings));
       });
     }
@@ -234,17 +232,13 @@ export default class Tabs {
       tab.setAttribute('aria-selected', String(selected));
       tab.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1');
     });
-    Object.assign(this.contentElement.style, {
-      overflow: 'clip',
-      position: 'relative',
-    });
+    this.contentElement.style.setProperty('overflow', 'clip');
+    this.contentElement.style.setProperty('position', 'relative');
     this.panelElements.forEach((panel) => {
       if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
-        Object.assign(panel.style, {
-          contentVisibility: 'visible',
-          display: 'block',
-          opacity: !panel.hidden ? '1' : '0',
-        });
+        panel.style.setProperty('content-visibility', 'visible');
+        panel.style.setProperty('display', 'block');
+        panel.style.setProperty('opacity', !panel.hidden ? '1' : '0');
       }
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
@@ -305,20 +299,18 @@ export default class Tabs {
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.controller.abort();
     this.indicatorInstances.forEach((indicator) => indicator.destroy(force));
-    const contentAnimation = this.contentAnimation;
-    if (contentAnimation) {
+    if (this.contentAnimation) {
       if (!force) {
         try {
-          await contentAnimation.finished;
+          await this.contentAnimation.finished;
         } catch {}
       }
-      contentAnimation.cancel();
+      this.contentAnimation.cancel();
     }
-    const panelAnimations = this.panelAnimations;
     if (!force) {
-      await Promise.all(panelAnimations.map((animation) => animation?.finished.catch(() => {})));
+      await Promise.all(this.panelAnimations.map((animation) => animation?.finished.catch(() => {})));
     }
-    panelAnimations.forEach((animation) => animation?.cancel());
+    this.panelAnimations.forEach((animation) => animation?.cancel());
   }
 }
 
@@ -370,11 +362,10 @@ class TabsIndicator {
   async destroy(force = false): Promise<void> {
     this.resizeObserver.disconnect();
     this.mutationObserver.disconnect();
-    const animation = this.animation;
-    if (animation) {
+    if (this.animation) {
       if (!force) {
         try {
-          await animation.finished;
+          await this.animation.finished;
         } catch {}
       }
       animation.cancel();
