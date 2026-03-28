@@ -39,9 +39,7 @@ export default class Tabs {
   private destroyed!: boolean;
 
   constructor(root: HTMLElement, options: Partial<TabsOptions> = {}) {
-    if (!root) {
-      return;
-    }
+    if (!root) return;
     this.rootElement = root;
     this.defaults = {
       animation: {
@@ -97,9 +95,7 @@ export default class Tabs {
   }
 
   private initialize(): void {
-    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) {
-      return;
-    }
+    if (!this.listElements.length || !this.tabElements.length || !this.contentElement || !this.panelElements.length) return;
     const { signal } = this.controller;
     this.listElements.forEach((list, i) => {
       if (this.settings.avoidDuplicates && i) {
@@ -180,9 +176,7 @@ export default class Tabs {
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
-    if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) {
-      return;
-    }
+    if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) return;
     event.preventDefault();
     event.stopPropagation();
     const focusables = [...list.querySelectorAll<HTMLElement>(this.settings.selector.tab)].filter(this.isFocusable);
@@ -222,9 +216,7 @@ export default class Tabs {
   }
 
   activate(tab: HTMLElement, match = false): void {
-    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') {
-      return;
-    }
+    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
     this.tabElements.forEach((tab) => {
@@ -292,9 +284,7 @@ export default class Tabs {
   }
 
   async destroy(force = false): Promise<void> {
-    if (this.destroyed) {
-      return;
-    }
+    if (this.destroyed) return;
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.controller.abort();
@@ -338,9 +328,7 @@ class TabsIndicator {
   }
 
   private update(): void {
-    if (!this.indicatorElement.checkVisibility()) {
-      return;
-    }
+    if (!this.indicatorElement.checkVisibility()) return;
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = `inset${horizontal ? 'Inline' : 'Block'}Start`;
     const size = `${horizontal ? 'inline' : 'block'}Size`;
@@ -368,7 +356,7 @@ class TabsIndicator {
           await this.animation.finished;
         } catch {}
       }
-      animation.cancel();
+      this.animation.cancel();
     }
   }
 }
