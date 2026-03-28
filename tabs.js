@@ -223,25 +223,24 @@ export default class Tabs {
       ['block-size', 'overflow', 'position'].forEach((name) => this.contentElement.style.removeProperty(name));
       this.panelElements.forEach((panel) => ['content-visibility', 'display', 'position', 'width'].forEach((name) => panel.style.removeProperty(name)));
     });
-    if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
-      this.panelElements.forEach((panel, i) => {
-        let animation = this.panelAnimations[i];
-        const selected = panel.id === id;
-        const opacity = getComputedStyle(panel).getPropertyValue('opacity');
-        animation?.cancel();
-        animation = this.panelAnimations[i] = panel.animate(
-          { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
-          {
-            duration: !match ? this.settings.animation.content.duration : 0,
-            easing: 'ease',
-          },
-        );
-        animation.addEventListener('finish', () => {
-          this.panelAnimations[i] = null;
-          panel.style.removeProperty('opacity');
-        });
+    if (!this.settings.animation.content.fade && !this.settings.animation.content.crossFade) return;
+    this.panelElements.forEach((panel, i) => {
+      let animation = this.panelAnimations[i];
+      const selected = panel.id === id;
+      const opacity = getComputedStyle(panel).getPropertyValue('opacity');
+      animation?.cancel();
+      animation = this.panelAnimations[i] = panel.animate(
+        { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
+        {
+          duration: !match ? this.settings.animation.content.duration : 0,
+          easing: 'ease',
+        },
+      );
+      animation.addEventListener('finish', () => {
+        this.panelAnimations[i] = null;
+        panel.style.removeProperty('opacity');
       });
-    }
+    });
   }
 
   async destroy(force = false) {
