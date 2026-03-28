@@ -75,7 +75,9 @@ export default class Tabs {
       selector: { ...this.defaults.selector, ...options.selector },
     };
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.settings.animation.content.duration = this.settings.animation.indicator.duration = 0;
+      const { animation } = this.settings;
+      animation.content.duration = 0;
+      animation.indicator.duration = 0;
     }
     const NOT_NESTED = `:not(:scope ${this.settings.selector.panel} *)`;
     this.listElements = [...this.rootElement.querySelectorAll<HTMLElement>(`${this.settings.selector.list}${NOT_NESTED}`)];
@@ -118,7 +120,7 @@ export default class Tabs {
       }
       tab.setAttribute('role', 'tab');
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? '0' : '-1');
-      if (!this.isFocusable(tab)) {
+      if (!Tabs.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
       const panel = this.panelElements[i % this.panelElements.length];
@@ -137,7 +139,7 @@ export default class Tabs {
     }
     this.panelElements.forEach((panel) => {
       panel.setAttribute('role', 'tabpanel');
-      if (!panel.hasAttribute('hidden') && !this.hasFocusableElement(panel)) {
+      if (!panel.hasAttribute('hidden') && !Tabs.hasFocusableElement(panel)) {
         panel.setAttribute('tabindex', '0');
       }
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
@@ -145,7 +147,7 @@ export default class Tabs {
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
 
-  private getActiveElement(): HTMLElement | null {
+  private static getActiveElement(): HTMLElement | null {
     let active = document.activeElement;
     while (active && active.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
@@ -153,15 +155,15 @@ export default class Tabs {
     return active as HTMLElement | null;
   }
 
-  private hasFocusableElement(element: HTMLElement): boolean {
-    return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((element) => element.checkVisibility()).length;
+  private static hasFocusableElement(element: HTMLElement): boolean {
+    return !![...element.querySelectorAll<HTMLElement>(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((e) => e.checkVisibility()).length;
   }
 
   private isDuplicates(tab: HTMLElement): boolean {
     return this.tabElements.indexOf(tab) >= this.panelElements.length;
   }
 
-  private isFocusable(element: HTMLElement): boolean {
+  private static isFocusable(element: HTMLElement): boolean {
     return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
   }
 
@@ -179,9 +181,9 @@ export default class Tabs {
     if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) return;
     event.preventDefault();
     event.stopPropagation();
-    const focusables = [...list.querySelectorAll<HTMLElement>(this.settings.selector.tab)].filter(this.isFocusable);
-    const length = focusables.length;
-    const active = this.getActiveElement()!;
+    const focusables = [...list.querySelectorAll<HTMLElement>(this.settings.selector.tab)].filter(Tabs.isFocusable);
+    const { length } = focusables;
+    const active = Tabs.getActiveElement()!;
     const currentIndex = focusables.indexOf(active);
     let newIndex = currentIndex;
     switch (key) {
@@ -203,6 +205,8 @@ export default class Tabs {
       case 'ArrowDown':
         newIndex = (currentIndex + 1) % length;
         break;
+      default:
+        break;
     }
     const tab = focusables[newIndex];
     tab.focus();
@@ -219,10 +223,10 @@ export default class Tabs {
     if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
-    this.tabElements.forEach((tab) => {
-      const selected = tab.getAttribute('aria-controls') === id;
-      tab.setAttribute('aria-selected', String(selected));
-      tab.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1');
+    this.tabElements.forEach((t) => {
+      const selected = t.getAttribute('aria-controls') === id;
+      t.setAttribute('aria-selected', String(selected));
+      t.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(t)) ? '0' : '-1');
     });
     this.contentElement.style.setProperty('overflow', 'clip');
     this.contentElement.style.setProperty('position', 'relative');
@@ -234,18 +238,18 @@ export default class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
-      if (panel.id === id && !this.hasFocusableElement(panel)) {
+      if (panel.id === id && !Tabs.hasFocusableElement(panel)) {
         panel.setAttribute('tabindex', '0');
       } else {
         panel.removeAttribute('tabindex');
       }
     });
-    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size')) || parseInt(getComputedStyle(this.panelElements.find((panel) => !panel.hidden)!).getPropertyValue('block-size'));
+    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) || parseInt(getComputedStyle(this.panelElements.find((panel) => !panel.hidden)!).getPropertyValue('block-size'), 10);
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
       } else {
-        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
+        panel.setAttribute('hidden', Tabs.isFocusable(this.tabElements[i]) ? 'until-found' : '');
       }
     });
     this.contentAnimation?.cancel();
@@ -268,13 +272,14 @@ export default class Tabs {
       const selected = panel.id === id;
       const opacity = getComputedStyle(panel).getPropertyValue('opacity');
       animation?.cancel();
-      animation = this.panelAnimations[i] = panel.animate(
+      this.panelAnimations[i] = panel.animate(
         { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
         {
           duration: !match ? this.settings.animation.content.duration : 0,
           easing: 'ease',
         },
       );
+      animation = this.panelAnimations[i];
       animation.addEventListener('finish', () => {
         this.panelAnimations[i] = null;
         panel.style.removeProperty('opacity');
