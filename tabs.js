@@ -118,8 +118,8 @@ export default class Tabs {
   }
 
   hasFocusableElement(element) {
-    return !![...element.querySelectorAll(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((e) =>
-      e.checkVisibility(),
+    return !![...element.querySelectorAll(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((element) =>
+      element.checkVisibility(),
     ).length;
   }
 
