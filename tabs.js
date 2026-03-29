@@ -71,7 +71,9 @@ export default class Tabs {
     });
     this.tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
-      tab.setAttribute('aria-controls', (this.panelElements[i % this.panelElements.length].id ||= `tabs-panel-${id}`));
+      const panel = this.panelElements[i % this.panelElements.length];
+      panel.id ||= `tabs-panel-${id}`;
+      tab.setAttribute('aria-controls', panel.id);
       if (!tab.hasAttribute('aria-selected')) {
         tab.setAttribute('aria-selected', 'false');
       }
@@ -81,10 +83,9 @@ export default class Tabs {
       }
       tab.setAttribute('role', 'tab');
       tab.setAttribute('tabindex', tab.getAttribute('aria-selected') === 'true' && (!this.settings.avoidDuplicates || !duplicates) ? '0' : '-1');
-      if (!Tabs.isFocusable(tab)) {
+      if (!this.isFocusable(tab)) {
         tab.style.setProperty('pointer-events', 'none');
       }
-      const panel = this.panelElements[i % this.panelElements.length];
       panel.setAttribute('aria-labelledby', `${panel.getAttribute('aria-labelledby') ?? ''} ${tab.id}`.trim());
       tab.addEventListener('click', this.handleTabClick, { signal });
       tab.addEventListener('keydown', this.handleTabKeyDown, { signal });
@@ -100,7 +101,7 @@ export default class Tabs {
     }
     this.panelElements.forEach((panel) => {
       panel.setAttribute('role', 'tabpanel');
-      if (!panel.hasAttribute('hidden') && !Tabs.hasFocusableElement(panel)) {
+      if (!panel.hasAttribute('hidden') && !this.hasFocusableElement(panel)) {
         panel.setAttribute('tabindex', '0');
       }
       panel.addEventListener('beforematch', this.handlePanelBeforeMatch, { signal });
@@ -108,23 +109,25 @@ export default class Tabs {
     this.rootElement.setAttribute('data-tabs-initialized', '');
   }
 
-  static getActiveElement() {
+  getActiveElement() {
     let active = document.activeElement;
-    while (active && active.shadowRoot?.activeElement) {
+    while (active?.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
     }
     return active;
   }
 
-  static hasFocusableElement(element) {
-    return !![...element.querySelectorAll(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((e) => e.checkVisibility()).length;
+  hasFocusableElement(element) {
+    return !![...element.querySelectorAll(':is(a[href], area[href], button, embed, iframe, input:not([type="hidden"]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false"]), [controls], [tabindex]):not([disabled], [hidden], [tabindex="-1"])')].filter((e) =>
+      e.checkVisibility(),
+    ).length;
   }
 
   isDuplicates(tab) {
     return this.tabElements.indexOf(tab) >= this.panelElements.length;
   }
 
-  static isFocusable(element) {
+  isFocusable(element) {
     return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
   }
 
@@ -142,9 +145,9 @@ export default class Tabs {
     if (!['Enter', ' ', 'End', 'Home', ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]), ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`])].includes(key)) return;
     event.preventDefault();
     event.stopPropagation();
-    const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(Tabs.isFocusable);
+    const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
     const { length } = focusables;
-    const active = Tabs.getActiveElement();
+    const active = this.getActiveElement();
     const currentIndex = focusables.indexOf(active);
     let newIndex = currentIndex;
     switch (key) {
@@ -166,8 +169,6 @@ export default class Tabs {
       case 'ArrowDown':
         newIndex = (currentIndex + 1) % length;
         break;
-      default:
-        break;
     }
     const tab = focusables[newIndex];
     tab.focus();
@@ -184,10 +185,10 @@ export default class Tabs {
     if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
-    this.tabElements.forEach((t) => {
-      const selected = t.getAttribute('aria-controls') === id;
-      t.setAttribute('aria-selected', String(selected));
-      t.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(t)) ? '0' : '-1');
+    this.tabElements.forEach((tab) => {
+      const selected = tab.getAttribute('aria-controls') === id;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.setAttribute('tabindex', selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1');
     });
     this.contentElement.style.setProperty('overflow', 'clip');
     this.contentElement.style.setProperty('position', 'relative');
@@ -199,7 +200,7 @@ export default class Tabs {
       }
       panel.style.setProperty('position', 'absolute');
       panel.style.setProperty('width', '100%');
-      if (panel.id === id && !Tabs.hasFocusableElement(panel)) {
+      if (panel.id === id && !this.hasFocusableElement(panel)) {
         panel.setAttribute('tabindex', '0');
       } else {
         panel.removeAttribute('tabindex');
@@ -210,7 +211,7 @@ export default class Tabs {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
       } else {
-        panel.setAttribute('hidden', Tabs.isFocusable(this.tabElements[i]) ? 'until-found' : '');
+        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
       }
     });
     this.contentAnimation?.cancel();
@@ -224,8 +225,8 @@ export default class Tabs {
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['block-size', 'overflow', 'position'].forEach((name) => this.contentElement.style.removeProperty(name));
-      this.panelElements.forEach((panel) => ['content-visibility', 'display', 'position', 'width'].forEach((name) => panel.style.removeProperty(name)));
+      ['block-size', 'overflow', 'position'].forEach((name) => void this.contentElement.style.removeProperty(name));
+      this.panelElements.forEach((panel) => void ['content-visibility', 'display', 'position', 'width'].forEach((name) => void panel.style.removeProperty(name)));
     });
     if (!this.settings.animation.content.fade && !this.settings.animation.content.crossFade) return;
     this.panelElements.forEach((panel, i) => {
@@ -253,7 +254,7 @@ export default class Tabs {
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.controller.abort();
-    this.indicatorInstances.forEach((indicator) => indicator.destroy(force));
+    this.indicatorInstances.forEach((indicator) => void indicator.destroy(force));
     if (this.contentAnimation) {
       if (!force) {
         try {
@@ -265,7 +266,7 @@ export default class Tabs {
     if (!force) {
       await Promise.all(this.panelAnimations.map((animation) => animation?.finished.catch(() => {})));
     }
-    this.panelAnimations.forEach((animation) => animation?.cancel());
+    this.panelAnimations.forEach((animation) => void animation?.cancel());
   }
 }
 
