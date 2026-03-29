@@ -225,8 +225,8 @@ export default class Tabs {
     this.contentAnimation.addEventListener('finish', () => {
       this.contentAnimation = null;
       this.rootElement.removeAttribute('data-tabs-animating');
-      ['block-size', 'overflow', 'position'].forEach((name) => void this.contentElement.style.removeProperty(name));
-      this.panelElements.forEach((panel) => void ['content-visibility', 'display', 'position', 'width'].forEach((name) => void panel.style.removeProperty(name)));
+      ['block-size', 'overflow', 'position'].forEach((name) => this.contentElement.style.removeProperty(name));
+      this.panelElements.forEach((panel) => ['content-visibility', 'display', 'position', 'width'].forEach((name) => panel.style.removeProperty(name)));
     });
     if (!this.settings.animation.content.fade && !this.settings.animation.content.crossFade) return;
     this.panelElements.forEach((panel, i) => {
@@ -254,7 +254,7 @@ export default class Tabs {
     this.destroyed = true;
     this.rootElement.removeAttribute('data-tabs-initialized');
     this.controller.abort();
-    this.indicatorInstances.forEach((indicator) => void indicator.destroy(force));
+    this.indicatorInstances.forEach((indicator) => indicator.destroy(force));
     if (this.contentAnimation) {
       if (!force) {
         try {
@@ -266,7 +266,7 @@ export default class Tabs {
     if (!force) {
       await Promise.all(this.panelAnimations.map((animation) => animation?.finished.catch(() => {})));
     }
-    this.panelAnimations.forEach((animation) => void animation?.cancel());
+    this.panelAnimations.forEach((animation) => animation?.cancel());
   }
 }
 
