@@ -247,7 +247,9 @@ export default class Tabs {
       );
       this.panelAnimations[i] = animation;
       const cleanupPanelAnimation = () => {
-        this.panelAnimations[i] = null;
+        if (this.panelAnimations[i] === animation) {
+          this.panelAnimations[i] = null;
+        }
       };
       animation.addEventListener('cancel', cleanupPanelAnimation);
       animation.addEventListener('finish', () => {
