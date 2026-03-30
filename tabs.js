@@ -222,8 +222,12 @@ export default class Tabs {
         easing: this.settings.animation.content.easing,
       },
     );
-    this.contentAnimation.addEventListener('finish', () => {
+    const cleanupContentAnimation = () => {
       this.contentAnimation = null;
+    };
+    this.contentAnimation.addEventListener('cancel', cleanupContentAnimation);
+    this.contentAnimation.addEventListener('finish', () => {
+      cleanupContentAnimation();
       this.rootElement.removeAttribute('data-tabs-animating');
       ['block-size', 'overflow', 'position'].forEach((name) => this.contentElement.style.removeProperty(name));
       this.panelElements.forEach((panel) => ['content-visibility', 'display', 'position', 'width'].forEach((name) => panel.style.removeProperty(name)));
@@ -234,16 +238,20 @@ export default class Tabs {
       const selected = panel.id === id;
       const opacity = getComputedStyle(panel).getPropertyValue('opacity');
       animation?.cancel();
-      this.panelAnimations[i] = panel.animate(
+      animation = panel.animate(
         { opacity: this.settings.animation.content.fade ? (selected ? [opacity, opacity, '1'] : [opacity, '0', '0']) : selected ? [opacity, '1'] : [opacity, '0'] },
         {
           duration: !match ? this.settings.animation.content.duration : 0,
           easing: 'ease',
         },
       );
-      animation = this.panelAnimations[i];
-      animation.addEventListener('finish', () => {
+      this.panelAnimations[i] = animation;
+      const cleanupPanelAnimation = () => {
         this.panelAnimations[i] = null;
+      };
+      animation.addEventListener('cancel', cleanupPanelAnimation);
+      animation.addEventListener('finish', () => {
+        cleanupPanelAnimation();
         panel.style.removeProperty('opacity');
       });
     });
@@ -309,13 +317,12 @@ class TabsIndicator {
   async destroy(force = false) {
     this.resizeObserver.disconnect();
     this.mutationObserver.disconnect();
-    if (this.animation) {
-      if (!force) {
-        try {
-          await this.animation.finished;
-        } catch {}
-      }
-      this.animation.cancel();
+    if (!this.animation) return;
+    if (!force) {
+      try {
+        await this.animation.finished;
+      } catch {}
     }
+    this.animation.cancel();
   }
 }
