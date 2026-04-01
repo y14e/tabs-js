@@ -45,7 +45,9 @@ export default class Tabs {
     this.tabElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.tab}${NOT_NESTED}`)];
     this.indicatorElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.indicator}${NOT_NESTED}`)];
     this.indicatorInstances = [];
-    this.contentElement = this.rootElement.querySelector(this.settings.selector.content);
+    const content = this.rootElement.querySelector(this.settings.selector.content);
+    if (!content) return;
+    this.contentElement = content;
     this.panelElements = [...this.rootElement.querySelectorAll(`${this.settings.selector.panel}${NOT_NESTED}`)];
     this.contentAnimation = null;
     this.panelAnimations = Array(this.panelElements.length).fill(null);
@@ -93,6 +95,7 @@ export default class Tabs {
     if (this.indicatorElements.length) {
       this.indicatorElements.forEach((indicator) => {
         const list = indicator.closest(this.settings.selector.list);
+        if (!(list instanceof HTMLElement)) return;
         list.style.setProperty('position', 'relative');
         indicator.style.setProperty('display', 'block');
         indicator.style.setProperty('position', 'absolute');
@@ -111,10 +114,10 @@ export default class Tabs {
 
   getActiveElement() {
     let active = document.activeElement;
-    while (active?.shadowRoot?.activeElement) {
+    while (active instanceof HTMLElement && active.shadowRoot?.activeElement) {
       active = active.shadowRoot.activeElement;
     }
-    return active;
+    return active instanceof HTMLElement ? active : null;
   }
 
   hasFocusableElement(element) {
@@ -134,11 +137,16 @@ export default class Tabs {
   handleTabClick(event) {
     event.preventDefault();
     event.stopPropagation();
-    this.activate(event.currentTarget);
+    const tab = event.currentTarget;
+    if (!(tab instanceof HTMLElement)) return;
+    this.activate(tab);
   }
 
   handleTabKeyDown(event) {
-    const list = event.currentTarget.closest(this.settings.selector.list);
+    const currentTab = event.currentTarget;
+    if (!(currentTab instanceof HTMLElement)) return;
+    const list = currentTab.closest(this.settings.selector.list);
+    if (!list) return;
     const both = list.getAttribute('aria-orientation') === 'undefined';
     const horizontal = list.getAttribute('aria-orientation') !== 'vertical';
     const { key } = event;
@@ -146,8 +154,8 @@ export default class Tabs {
     event.preventDefault();
     event.stopPropagation();
     const focusables = [...list.querySelectorAll(this.settings.selector.tab)].filter(this.isFocusable);
-    const { length } = focusables;
     const active = this.getActiveElement();
+    if (!active) return;
     const currentIndex = focusables.indexOf(active);
     let newIndex = currentIndex;
     switch (key) {
@@ -156,29 +164,34 @@ export default class Tabs {
         active.click();
         return;
       case 'End':
-        newIndex = length - 1;
+        newIndex = -1;
         break;
       case 'Home':
         newIndex = 0;
         break;
       case 'ArrowLeft':
       case 'ArrowUp':
-        newIndex = (currentIndex - 1 + length) % length;
+        newIndex = currentIndex - 1;
         break;
       case 'ArrowRight':
       case 'ArrowDown':
-        newIndex = (currentIndex + 1) % length;
+        newIndex = (currentIndex + 1) % focusables.length;
         break;
     }
-    const tab = focusables[newIndex];
-    tab.focus();
+    const newTab = focusables.at(newIndex);
+    if (!newTab) return;
+    newTab.focus();
     if (!this.settings.manual) {
-      tab.click();
+      newTab.click();
     }
   }
 
   handlePanelBeforeMatch(event) {
-    this.activate(this.rootElement.querySelector(`[aria-controls="${event.currentTarget.id}"]`), true);
+    const panel = event.currentTarget;
+    if (!(panel instanceof HTMLElement)) return;
+    const tab = this.rootElement.querySelector(`[aria-controls="${panel.id}"]`);
+    if (!tab) return;
+    this.activate(tab, true);
   }
 
   activate(tab, match = false) {
@@ -206,7 +219,9 @@ export default class Tabs {
         panel.removeAttribute('tabindex');
       }
     });
-    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) || parseInt(getComputedStyle(this.panelElements.find((panel) => !panel.hidden)).getPropertyValue('block-size'), 10);
+    const panel = this.panelElements.find((panel) => panel.id === id);
+    if (!panel) return;
+    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) || parseInt(getComputedStyle(panel).getPropertyValue('block-size'), 10);
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -216,7 +231,7 @@ export default class Tabs {
     });
     this.contentAnimation?.cancel();
     this.contentAnimation = this.contentElement.animate(
-      { blockSize: [`${size}px`, getComputedStyle(this.rootElement.querySelector(`#${id}`)).getPropertyValue('block-size')] },
+      { blockSize: [`${size}px`, getComputedStyle(panel).getPropertyValue('block-size')] },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
         easing: this.settings.animation.content.easing,
@@ -301,7 +316,9 @@ class TabsIndicator {
     const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
     const position = `inset${horizontal ? 'Inline' : 'Block'}Start`;
     const size = `${horizontal ? 'inline' : 'block'}Size`;
-    const { x: tabX, y: tabY, width, height } = this.listElement.querySelector('[aria-selected="true"]').getBoundingClientRect();
+    const tab = this.listElement.querySelector('[aria-selected="true"]');
+    if (!tab) return;
+    const { x: tabX, y: tabY, width, height } = tab.getBoundingClientRect();
     const { x: listX, y: listY } = this.listElement.getBoundingClientRect();
     this.animation = this.indicatorElement.animate(
       {
