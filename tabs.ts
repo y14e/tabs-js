@@ -237,6 +237,7 @@ export default class Tabs {
     if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
     this.rootElement.setAttribute('data-tabs-animating', '');
     const id = tab.getAttribute('aria-controls');
+    if (!id) return;
     this.tabElements.forEach((tab) => {
       const selected = tab.getAttribute('aria-controls') === id;
       tab.setAttribute('aria-selected', String(selected));
@@ -258,9 +259,9 @@ export default class Tabs {
         panel.removeAttribute('tabindex');
       }
     });
-    const panel = this.panelElements.find((panel) => panel.id === id);
-    if (!panel) return;
-    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) || parseInt(getComputedStyle(panel).getPropertyValue('block-size'), 10);
+    const currentPanel = this.panelElements.find((panel) => !panel.hidden);
+    if (!currentPanel) return;
+    const size = parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) || parseInt(getComputedStyle(currentPanel).getPropertyValue('block-size'), 10);
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
@@ -269,8 +270,10 @@ export default class Tabs {
       }
     });
     this.contentAnimation?.cancel();
+    const newPanel = document.getElementById(id);
+    if (!newPanel) return;
     this.contentAnimation = this.contentElement.animate(
-      { blockSize: [`${size}px`, getComputedStyle(panel).getPropertyValue('block-size')] },
+      { blockSize: [`${size}px`, getComputedStyle(newPanel).getPropertyValue('block-size')] },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
         easing: this.settings.animation.content.easing,
