@@ -119,7 +119,9 @@ export default class Tabs {
 
     this.indicatorInstances = [];
 
-    const content = this.rootElement.querySelector<HTMLElement>(this.settings.selector.content);
+    const content = this.rootElement.querySelector<HTMLElement>(
+      this.settings.selector.content,
+    );
 
     if (!content) return;
 
@@ -218,7 +220,9 @@ export default class Tabs {
         indicator.style.setProperty('display', 'block');
         indicator.style.setProperty('position', 'absolute');
 
-        this.indicatorInstances.push(new TabsIndicator(indicator, list, this.settings));
+        this.indicatorInstances.push(
+          new TabsIndicator(indicator, list, this.settings),
+        );
       });
     }
 
@@ -260,7 +264,10 @@ export default class Tabs {
   }
 
   private isFocusable(element: HTMLElement): boolean {
-    return element.getAttribute('aria-hidden') !== 'true' && !element.hasAttribute('disabled');
+    return (
+      element.getAttribute('aria-hidden') !== 'true' &&
+      !element.hasAttribute('disabled')
+    );
   }
 
   private handleTabClick(event: MouseEvent): void {
@@ -294,8 +301,12 @@ export default class Tabs {
         ' ',
         'End',
         'Home',
-        ...(both ? ['ArrowLeft', 'ArrowUp'] : [`Arrow${horizontal ? 'Left' : 'Up'}`]),
-        ...(both ? ['ArrowRight', 'ArrowDown'] : [`Arrow${horizontal ? 'Right' : 'Down'}`]),
+        ...(both
+          ? ['ArrowLeft', 'ArrowUp']
+          : [`Arrow${horizontal ? 'Left' : 'Up'}`]),
+        ...(both
+          ? ['ArrowRight', 'ArrowDown']
+          : [`Arrow${horizontal ? 'Right' : 'Down'}`]),
       ].includes(key)
     )
       return;
@@ -303,9 +314,9 @@ export default class Tabs {
     event.preventDefault();
     event.stopPropagation();
 
-    const focusables = [...list.querySelectorAll<HTMLElement>(this.settings.selector.tab)].filter(
-      this.isFocusable,
-    );
+    const focusables = [
+      ...list.querySelectorAll<HTMLElement>(this.settings.selector.tab),
+    ].filter(this.isFocusable);
 
     const active = this.getActiveElement();
 
@@ -352,7 +363,9 @@ export default class Tabs {
 
     if (!(panel instanceof HTMLElement)) return;
 
-    const tab = this.rootElement.querySelector<HTMLElement>(`[aria-controls="${panel.id}"]`);
+    const tab = this.rootElement.querySelector<HTMLElement>(
+      `[aria-controls="${panel.id}"]`,
+    );
 
     if (!tab) return;
 
@@ -360,7 +373,11 @@ export default class Tabs {
   }
 
   activate(tab: HTMLElement, match = false): void {
-    if (!this.tabElements.includes(tab) || tab.getAttribute('aria-selected') === 'true') return;
+    if (
+      !this.tabElements.includes(tab) ||
+      tab.getAttribute('aria-selected') === 'true'
+    )
+      return;
 
     this.rootElement.setAttribute('data-tabs-animating', '');
 
@@ -375,7 +392,9 @@ export default class Tabs {
 
       tab.setAttribute(
         'tabindex',
-        selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab)) ? '0' : '-1',
+        selected && (!this.settings.avoidDuplicates || !this.isDuplicates(tab))
+          ? '0'
+          : '-1',
       );
     });
 
@@ -383,7 +402,10 @@ export default class Tabs {
     this.contentElement.style.setProperty('position', 'relative');
 
     this.panelElements.forEach((panel) => {
-      if (this.settings.animation.content.fade || this.settings.animation.content.crossFade) {
+      if (
+        this.settings.animation.content.fade ||
+        this.settings.animation.content.crossFade
+      ) {
         panel.style.setProperty('content-visibility', 'visible');
         panel.style.setProperty('display', 'block');
         panel.style.setProperty('opacity', !panel.hidden ? '1' : '0');
@@ -404,14 +426,23 @@ export default class Tabs {
     if (!currentPanel) return;
 
     const size =
-      parseInt(getComputedStyle(this.contentElement).getPropertyValue('block-size'), 10) ||
-      parseInt(getComputedStyle(currentPanel).getPropertyValue('block-size'), 10);
+      parseInt(
+        getComputedStyle(this.contentElement).getPropertyValue('block-size'),
+        10,
+      ) ||
+      parseInt(
+        getComputedStyle(currentPanel).getPropertyValue('block-size'),
+        10,
+      );
 
     this.panelElements.forEach((panel, i) => {
       if (panel.id === id) {
         panel.removeAttribute('hidden');
       } else {
-        panel.setAttribute('hidden', this.isFocusable(this.tabElements[i]) ? 'until-found' : '');
+        panel.setAttribute(
+          'hidden',
+          this.isFocusable(this.tabElements[i]) ? 'until-found' : '',
+        );
       }
     });
 
@@ -423,7 +454,10 @@ export default class Tabs {
 
     this.contentAnimation = this.contentElement.animate(
       {
-        blockSize: [`${size}px`, getComputedStyle(newPanel).getPropertyValue('block-size')],
+        blockSize: [
+          `${size}px`,
+          getComputedStyle(newPanel).getPropertyValue('block-size'),
+        ],
       },
       {
         duration: !match ? this.settings.animation.content.duration : 0,
@@ -453,7 +487,11 @@ export default class Tabs {
       );
     });
 
-    if (!this.settings.animation.content.fade && !this.settings.animation.content.crossFade) return;
+    if (
+      !this.settings.animation.content.fade &&
+      !this.settings.animation.content.crossFade
+    )
+      return;
 
     this.panelElements.forEach((panel, i) => {
       let animation = this.panelAnimations[i];
@@ -519,7 +557,9 @@ export default class Tabs {
 
     if (!force) {
       await Promise.all(
-        this.panelAnimations.map((animation) => animation?.finished.catch(() => {})),
+        this.panelAnimations.map((animation) =>
+          animation?.finished.catch(() => {}),
+        ),
       );
     }
 
@@ -536,7 +576,11 @@ class TabsIndicator {
   private resizeObserver: ResizeObserver;
   private mutationObserver: MutationObserver;
 
-  constructor(indicator: HTMLElement, list: HTMLElement, settings: TabsOptions) {
+  constructor(
+    indicator: HTMLElement,
+    list: HTMLElement,
+    settings: TabsOptions,
+  ) {
     this.indicatorElement = indicator;
     this.listElement = list;
     this.settings = settings;
@@ -558,12 +602,15 @@ class TabsIndicator {
   private update(): void {
     if (!this.indicatorElement.checkVisibility()) return;
 
-    const horizontal = this.listElement.getAttribute('aria-orientation') !== 'vertical';
+    const horizontal =
+      this.listElement.getAttribute('aria-orientation') !== 'vertical';
 
     const position = `inset${horizontal ? 'Inline' : 'Block'}Start`;
     const size = `${horizontal ? 'inline' : 'block'}Size`;
 
-    const tab = this.listElement.querySelector<HTMLElement>('[aria-selected="true"]');
+    const tab = this.listElement.querySelector<HTMLElement>(
+      '[aria-selected="true"]',
+    );
 
     if (!tab) return;
 
