@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 0.1.2
+ * @version 0.1.3
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -179,7 +179,6 @@ export default class Tabs {
       return;
     }
 
-    this.#rootElement.setAttribute('data-tabs-animating', '');
     const ids = tab.getAttribute('aria-controls')?.trim().split(/\s+/) || [];
 
     if (!ids.length) {
@@ -206,6 +205,9 @@ export default class Tabs {
       return;
     }
 
+    const size = this.#contentElement.offsetHeight;
+    this.#rootElement.setAttribute('data-tabs-animating', '');
+
     const { style } = this.#contentElement;
     style.setProperty('overflow', 'clip');
     style.setProperty('position', 'relative');
@@ -228,22 +230,6 @@ export default class Tabs {
         panel.removeAttribute('tabindex');
       }
     });
-
-    const currentPanel = this.#panelElements.find((panel) => !panel.hidden);
-
-    if (!currentPanel) {
-      return;
-    }
-
-    const size =
-      parseInt(
-        getComputedStyle(this.#contentElement).getPropertyValue('block-size'),
-        10,
-      ) ||
-      parseInt(
-        getComputedStyle(currentPanel).getPropertyValue('block-size'),
-        10,
-      );
 
     this.#panelElements.forEach((panel, i) => {
       if (ids.includes(panel.id)) {
