@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -205,19 +205,21 @@ export default class Tabs {
       return;
     }
 
-    this.#contentElement.style.setProperty('overflow', 'clip');
-    this.#contentElement.style.setProperty('position', 'relative');
+    const { style } = this.#contentElement;
+    style.setProperty('overflow', 'clip');
+    style.setProperty('position', 'relative');
     const { fade, crossFade } = this.#settings.animation.content;
 
     this.#panelElements.forEach((panel) => {
+      const { style } = panel;
       if (fade || crossFade) {
-        panel.style.setProperty('content-visibility', 'visible');
-        panel.style.setProperty('display', 'block');
-        panel.style.setProperty('opacity', !panel.hidden ? '1' : '0');
+        style.setProperty('content-visibility', 'visible');
+        style.setProperty('display', 'block');
+        style.setProperty('opacity', !panel.hidden ? '1' : '0');
       }
 
-      panel.style.setProperty('position', 'absolute');
-      panel.style.setProperty('width', '100%');
+      style.setProperty('position', 'absolute');
+      style.setProperty('width', '100%');
 
       if (ids.includes(panel.id) && !hasFocusable(panel)) {
         panel.setAttribute('tabindex', '0');
@@ -414,7 +416,11 @@ export default class Tabs {
       }
 
       panel.id ||= `tabs-panel-${id}`;
-      tab.setAttribute('aria-controls', panel.id);
+      const controls = new Set(
+        tab.getAttribute('aria-controls')?.trim().split(/\s+/) ?? [],
+      );
+      controls.add(panel.id);
+      tab.setAttribute('aria-controls', [...controls].join(' '));
 
       if (!tab.hasAttribute('aria-selected')) {
         tab.setAttribute('aria-selected', 'false');
@@ -439,10 +445,11 @@ export default class Tabs {
         tab.style.setProperty('pointer-events', 'none');
       }
 
-      panel.setAttribute(
-        'aria-labelledby',
-        `${panel.getAttribute('aria-labelledby') ?? ''} ${tab.id}`.trim(),
+      const labelledBy = new Set(
+        panel.getAttribute('aria-labelledby')?.trim().split(/\s+/) ?? [],
       );
+      labelledBy.add(tab.id);
+      panel.setAttribute('aria-labelledby', [...labelledBy].join(' '));
       tab.addEventListener('click', this.#onTabClick, { signal });
       tab.addEventListener('keydown', this.#onTabKeyDown, { signal });
     });
