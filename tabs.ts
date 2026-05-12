@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 0.1.4
+ * @version 0.1.5
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -45,6 +45,12 @@ type DeepRequired<T> = T extends (...args: unknown[]) => unknown
       ? { [K in keyof T]-?: DeepRequired<NonNullable<T[K]>> }
       : NonNullable<T>;
 
+type Binding = {
+  tab: HTMLElement;
+  panel: HTMLElement;
+  animation: Animation | null;
+};
+
 // -----------------------------------------------------------------------------
 // APIs
 // -----------------------------------------------------------------------------
@@ -82,9 +88,9 @@ export default class Tabs {
   #indicators: TabsIndicator[] = [];
   #contentElement!: HTMLElement | null;
   #panelElements!: HTMLElement[];
+  #bindings = new WeakMap<HTMLElement, Binding>();
   #controller: AbortController | null = new AbortController();
-  #contentAnimation: Animation | null = null;
-  #panelAnimations!: (Animation | null)[];
+  #animation: Animation | null = null;
   #isDestroyed = false;
 
   constructor(root: HTMLElement, options: TabsOptions = {}) {
@@ -170,7 +176,6 @@ export default class Tabs {
       return;
     }
 
-    this.#panelAnimations = Array(length).fill(null);
     this.#initialize();
   }
 
@@ -245,7 +250,7 @@ export default class Tabs {
       }
     });
 
-    this.#contentAnimation?.cancel();
+    this.#animation?.cancel();
     const newPanel = ids.map((id) => document.getElementById(id)).find(Boolean);
 
     if (!newPanel) {
@@ -253,7 +258,7 @@ export default class Tabs {
     }
 
     const { duration, easing } = this.#settings.animation.content;
-    this.#contentAnimation = this.#contentElement.animate(
+    this.#animation = this.#contentElement.animate(
       {
         blockSize: [
           `${size}px`,
@@ -267,15 +272,21 @@ export default class Tabs {
     );
 
     const cleanupContentAnimation = () => {
-      this.#contentAnimation = null;
+      this.#animation = null;
     };
 
-    this.#contentAnimation.addEventListener('cancel', cleanupContentAnimation);
+    this.#animation.addEventListener('cancel', cleanupContentAnimation);
 
-    this.#panelElements.forEach((panel, i) => {
+    this.#panelElements.forEach((panel) => {
       const isSelected = ids.includes(panel.id);
       const opacity = getComputedStyle(panel).getPropertyValue('opacity');
-      let animation = this.#panelAnimations[i];
+      const binding = this.#bindings.get(panel);
+
+      if (!binding) {
+        return;
+      }
+
+      let animation = binding.animation;
       animation?.cancel();
       animation = panel.animate(
         {
@@ -289,17 +300,17 @@ export default class Tabs {
         },
         {
           duration:
-            !match || fade || crossFade
+            !match && (fade || crossFade)
               ? this.#settings.animation.content.duration
               : 0,
           easing: 'ease',
         },
       );
-      this.#panelAnimations[i] = animation;
+      binding.animation = animation;
 
       const cleanupPanelAnimation = () => {
-        if (this.#panelAnimations[i] === animation) {
-          this.#panelAnimations[i] = null;
+        if (binding.animation === animation) {
+          binding.animation = null;
         }
       };
 
@@ -313,7 +324,9 @@ export default class Tabs {
 
     const promises: Promise<void>[] = [];
 
-    this.#panelAnimations.forEach((animation) => {
+    this.#panelElements.forEach((panel) => {
+      const animation = this.#bindings.get(panel)?.animation;
+
       if (animation) {
         promises.push(waitAnimation(animation));
       }
@@ -357,26 +370,30 @@ export default class Tabs {
 
     this.#indicators.length = 0;
 
-    if (this.#contentAnimation) {
+    if (this.#animation) {
       if (!force) {
         try {
-          await this.#contentAnimation.finished;
+          await this.#animation.finished;
         } catch {}
       }
 
-      this.#contentAnimation.cancel();
+      this.#animation.cancel();
     }
 
     if (!force) {
       await Promise.all(
-        this.#panelAnimations.map((animation) =>
-          animation?.finished.catch(() => {}),
+        this.#panelElements.map((panel) =>
+          this.#bindings.get(panel)?.animation?.finished.catch(() => {}),
         ),
       );
     }
 
-    this.#panelAnimations.forEach((animation) => {
-      animation?.cancel();
+    this.#panelElements.forEach((panel) => {
+      const animation = this.#bindings.get(panel)?.animation;
+
+      if (animation) {
+        animation.cancel();
+      }
     });
 
     this.#listElements.length = 0;
@@ -476,6 +493,18 @@ export default class Tabs {
       panel.addEventListener('beforematch', this.#onPanelBeforeMatch, {
         signal,
       });
+    });
+
+    this.#tabElements.forEach((tab, i) => {
+      const panel = this.#panelElements[i % this.#panelElements.length];
+
+      if (!panel) {
+        return;
+      }
+
+      const binding = createBinding(tab, panel);
+      this.#bindings.set(tab, binding);
+      this.#bindings.set(panel, binding);
     });
 
     this.#rootElement.setAttribute('data-tabs-initialized', '');
@@ -582,9 +611,7 @@ export default class Tabs {
       return;
     }
 
-    const tab = this.#rootElement.querySelector<HTMLElement>(
-      `[aria-controls="${panel.id}"]`,
-    );
+    const tab = this.#bindings.get(panel)?.tab;
 
     if (!tab) {
       return;
@@ -682,6 +709,10 @@ class TabsIndicator {
 // -----------------------------------------------------------------------------
 // Utils
 // -----------------------------------------------------------------------------
+
+function createBinding(tab: HTMLElement, panel: HTMLElement) {
+  return { tab, panel, animation: null };
+}
 
 function getActiveElement() {
   let current = document.activeElement;
