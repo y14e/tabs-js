@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 0.1.5
+ * @version 1.0.0
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -85,12 +85,13 @@ export default class Tabs {
   #listElements: HTMLElement[];
   #tabElements!: HTMLElement[];
   #indicatorElements!: HTMLElement[];
-  #indicators: TabsIndicator[] = [];
   #contentElement!: HTMLElement | null;
   #panelElements!: HTMLElement[];
   #bindings = new WeakMap<HTMLElement, Binding>();
-  #controller: AbortController | null = new AbortController();
+  #eventController: AbortController | null = new AbortController();
+  #animationController: AbortController | null = new AbortController();
   #animation: Animation | null = null;
+  #indicators: TabsIndicator[] = [];
   #isDestroyed = false;
 
   constructor(root: HTMLElement, options: TabsOptions = {}) {
@@ -179,30 +180,34 @@ export default class Tabs {
     this.#initialize();
   }
 
-  async activate(tab: HTMLElement, match = false) {
-    if (!this.#tabElements.includes(tab) || tab.ariaSelected === 'true') {
+  async activate(tab: HTMLElement, isMatch = false) {
+    if (this.#isDestroyed) {
       return;
     }
 
-    const ids = tab.getAttribute('aria-controls')?.trim().split(/\s+/) || [];
+    if (!(tab instanceof HTMLElement) || !this.#bindings.has(tab)) {
+      console.warn('Invalid tab element');
+      return;
+    }
+
+    if (tab.ariaSelected === 'true') {
+      return;
+    }
+
+    const ids = getAriaControlsIds(tab);
 
     if (!ids.length) {
       return;
     }
 
     this.#tabElements.forEach((tab) => {
-      const isSelected = tab
-        .getAttribute('aria-controls')
-        ?.trim()
-        .split(/\s+/)
-        .some((id: string) => ids.includes(id));
+      const isSelected = getAriaControlsIds(tab).some((id: string) =>
+        ids.includes(id),
+      );
       tab.setAttribute('aria-selected', String(isSelected));
       tab.setAttribute(
         'tabindex',
-        isSelected &&
-          (!this.#settings.avoidDuplicates || !this.isDuplicates(tab))
-          ? '0'
-          : '-1',
+        isSelected && !this.#isAvoidedTab(tab) ? '0' : '-1',
       );
     });
 
@@ -223,11 +228,11 @@ export default class Tabs {
       if (fade || crossFade) {
         style.setProperty('content-visibility', 'visible');
         style.setProperty('display', 'block');
-        style.setProperty('opacity', !panel.hidden ? '1' : '0');
+        style.setProperty('opacity', panel.hidden ? '0' : '1');
       }
 
+      style.setProperty('inline-size', '100%');
       style.setProperty('position', 'absolute');
-      style.setProperty('width', '100%');
 
       if (ids.includes(panel.id) && !hasFocusable(panel)) {
         panel.setAttribute('tabindex', '0');
@@ -251,12 +256,13 @@ export default class Tabs {
     });
 
     this.#animation?.cancel();
-    const newPanel = ids.map((id) => document.getElementById(id)).find(Boolean);
+    const newPanel = this.#bindings.get(tab)?.panel;
 
     if (!newPanel) {
       return;
     }
 
+    // content
     const { duration, easing } = this.#settings.animation.content;
     this.#animation = this.#contentElement.animate(
       {
@@ -266,7 +272,7 @@ export default class Tabs {
         ],
       },
       {
-        duration: !match ? duration : 0,
+        duration: isMatch ? 0 : duration,
         easing: easing,
       },
     );
@@ -275,20 +281,24 @@ export default class Tabs {
       this.#animation = null;
     };
 
-    this.#animation.addEventListener('cancel', cleanupContentAnimation);
+    const { signal } = this.#animationController ?? new AbortController();
+    this.#animation.addEventListener('cancel', cleanupContentAnimation, {
+      once: true,
+      signal,
+    });
 
+    // panel
     this.#panelElements.forEach((panel) => {
-      const isSelected = ids.includes(panel.id);
-      const opacity = getComputedStyle(panel).getPropertyValue('opacity');
       const binding = this.#bindings.get(panel);
 
       if (!binding) {
         return;
       }
 
-      let animation = binding.animation;
-      animation?.cancel();
-      animation = panel.animate(
+      const opacity = getComputedStyle(panel).getPropertyValue('opacity');
+      binding.animation?.cancel();
+      const isSelected = ids.includes(panel.id);
+      const animation = panel.animate(
         {
           opacity: fade
             ? isSelected
@@ -300,9 +310,9 @@ export default class Tabs {
         },
         {
           duration:
-            !match && (fade || crossFade)
-              ? this.#settings.animation.content.duration
-              : 0,
+            isMatch || !(fade || crossFade)
+              ? 0
+              : this.#settings.animation.content.duration,
           easing: 'ease',
         },
       );
@@ -314,12 +324,20 @@ export default class Tabs {
         }
       };
 
-      animation.addEventListener('cancel', cleanupPanelAnimation);
-
-      animation.addEventListener('finish', () => {
-        cleanupPanelAnimation();
-        panel.style.removeProperty('opacity');
+      const { signal } = this.#animationController ?? new AbortController();
+      animation.addEventListener('cancel', cleanupPanelAnimation, {
+        once: true,
+        signal,
       });
+
+      animation.addEventListener(
+        'finish',
+        () => {
+          cleanupPanelAnimation();
+          this.#removePanelStyles(panel);
+        },
+        { once: true, signal },
+      );
     });
 
     const promises: Promise<void>[] = [];
@@ -334,25 +352,10 @@ export default class Tabs {
 
     await Promise.allSettled(promises);
 
+    // finish panel animations
     cleanupContentAnimation();
+    this.#onPanelAnimationsFinish();
     this.#rootElement.removeAttribute('data-tabs-animating');
-
-    if (!this.#contentElement) {
-      return;
-    }
-
-    const { style: contentStyle } = this.#contentElement;
-    contentStyle.removeProperty('block-size');
-    contentStyle.removeProperty('overflow');
-    contentStyle.removeProperty('position');
-
-    this.#panelElements.forEach((panel) => {
-      const { style } = panel;
-      style.removeProperty('content-visibility');
-      style.removeProperty('display');
-      style.removeProperty('position');
-      style.removeProperty('width');
-    });
   }
 
   async destroy(force = false) {
@@ -361,8 +364,8 @@ export default class Tabs {
     }
 
     this.#isDestroyed = true;
-    this.#controller?.abort();
-    this.#controller = null;
+    this.#eventController?.abort();
+    this.#eventController = null;
 
     this.#indicators.forEach((indicator) => {
       indicator.destroy(force);
@@ -396,6 +399,9 @@ export default class Tabs {
       }
     });
 
+    this.#onPanelAnimationsFinish();
+    this.#animationController?.abort();
+    this.#animationController = null;
     this.#listElements.length = 0;
     this.#tabElements.length = 0;
     this.#contentElement = null;
@@ -404,7 +410,7 @@ export default class Tabs {
   }
 
   #initialize() {
-    const { signal } = this.#controller ?? new AbortController();
+    const { signal } = this.#eventController ?? new AbortController();
 
     this.#listElements.forEach((list, i) => {
       if (this.#settings.avoidDuplicates && i) {
@@ -427,9 +433,7 @@ export default class Tabs {
       }
 
       panel.id ||= `tabs-panel-${id}`;
-      const controls = new Set(
-        tab.getAttribute('aria-controls')?.trim().split(/\s+/) ?? [],
-      );
+      const controls = new Set(getAriaControlsIds(tab));
       controls.add(panel.id);
       tab.setAttribute('aria-controls', [...controls].join(' '));
 
@@ -437,19 +441,16 @@ export default class Tabs {
         tab.setAttribute('aria-selected', 'false');
       }
 
-      const isDuplicates = this.isDuplicates(tab);
+      const isAvoided = this.#isAvoidedTab(tab);
 
-      if (!this.#settings.avoidDuplicates || !isDuplicates) {
+      if (!isAvoided) {
         tab.id ||= `tabs-tab-${id}`;
       }
 
       tab.setAttribute('role', 'tab');
       tab.setAttribute(
         'tabindex',
-        tab.ariaSelected === 'true' &&
-          (!this.#settings.avoidDuplicates || !isDuplicates)
-          ? '0'
-          : '-1',
+        tab.ariaSelected === 'true' && !isAvoided ? '0' : '-1',
       );
 
       if (!isFocusable(tab)) {
@@ -465,23 +466,15 @@ export default class Tabs {
       tab.addEventListener('keydown', this.#onTabKeyDown, { signal });
     });
 
-    if (this.#indicatorElements.length) {
-      this.#indicatorElements.forEach((indicator) => {
-        const list = indicator.closest(this.#settings.selector.list);
-
-        if (!(list instanceof HTMLElement)) {
-          return;
-        }
-
-        list.style.setProperty('position', 'relative');
-        indicator.style.setProperty('display', 'block');
-        indicator.style.setProperty('position', 'absolute');
-
-        this.#indicators.push(
-          new TabsIndicator(indicator, list, this.#settings),
-        );
-      });
-    }
+    this.#indicatorElements.forEach((indicator) => {
+      indicator
+        .closest<HTMLElement>(this.#settings.selector.list)
+        ?.style.setProperty('position', 'relative');
+      const { style } = indicator;
+      style.setProperty('display', 'block');
+      style.setProperty('position', 'absolute');
+      this.#indicators.push(new TabsIndicator(indicator, this.#settings));
+    });
 
     this.#panelElements.forEach((panel) => {
       panel.setAttribute('role', 'tabpanel');
@@ -509,6 +502,21 @@ export default class Tabs {
 
     this.#rootElement.setAttribute('data-tabs-initialized', '');
   }
+
+  #onPanelAnimationsFinish = () => {
+    if (!this.#contentElement) {
+      return;
+    }
+
+    const { style } = this.#contentElement;
+    style.removeProperty('block-size');
+    style.removeProperty('overflow');
+    style.removeProperty('position');
+
+    this.#panelElements.forEach((panel) => {
+      this.#removePanelStyles(panel);
+    });
+  };
 
   #onTabClick = (event: MouseEvent) => {
     event.preventDefault();
@@ -620,48 +628,61 @@ export default class Tabs {
     this.activate(tab, true);
   };
 
-  private isDuplicates(tab: HTMLElement) {
-    return this.#tabElements.indexOf(tab) >= this.#panelElements.length;
+  #isAvoidedTab(tab: HTMLElement) {
+    return (
+      this.#settings.avoidDuplicates &&
+      this.#tabElements.indexOf(tab) >= this.#panelElements.length
+    );
+  }
+
+  #removePanelStyles(panel: HTMLElement) {
+    const { style } = panel;
+    style.removeProperty('content-visibility');
+    style.removeProperty('display');
+    style.removeProperty('inline-size');
+    style.removeProperty('opacity');
+    style.removeProperty('position');
   }
 }
 
 class TabsIndicator {
-  #indicatorElement: HTMLElement;
-  #listElement: HTMLElement;
+  #rootElement: HTMLElement;
   #settings: DeepRequired<TabsOptions>;
-
+  #listElement: HTMLElement | null = null;
   #animation: Animation | null = null;
   #resizeObserver: ResizeObserver | null = null;
   #mutationObserver: MutationObserver | null = null;
 
-  constructor(
-    indicator: HTMLElement,
-    list: HTMLElement,
-    settings: DeepRequired<TabsOptions>,
-  ) {
-    this.#indicatorElement = indicator;
-    this.#listElement = list;
+  constructor(root: HTMLElement, settings: DeepRequired<TabsOptions>) {
+    this.#rootElement = root;
     this.#settings = settings;
+    this.#listElement = root.closest(settings.selector.list);
 
-    this.update = this.update.bind(this);
+    if (!this.#listElement) {
+      return;
+    }
 
-    this.#resizeObserver = new ResizeObserver(this.update);
+    this.#resizeObserver = new ResizeObserver(this.#update);
     this.#resizeObserver.observe(this.#listElement);
-    this.#mutationObserver = new MutationObserver(this.update);
+    this.#mutationObserver = new MutationObserver(this.#update);
     this.#mutationObserver.observe(this.#listElement, {
       attributeFilter: ['aria-selected'],
       subtree: true,
     });
   }
 
-  private update() {
-    if (!this.#indicatorElement.checkVisibility()) {
+  #update = () => {
+    if (!this.#rootElement.checkVisibility()) {
       return;
     }
 
-    const horizontal = this.#listElement.ariaOrientation !== 'vertical';
-    const position = `inset${horizontal ? 'Inline' : 'Block'}Start`;
-    const size = `${horizontal ? 'inline' : 'block'}Size`;
+    if (!this.#listElement) {
+      return;
+    }
+
+    const isHorizontal = this.#listElement.ariaOrientation !== 'vertical';
+    const position = `inset${isHorizontal ? 'Inline' : 'Block'}Start`;
+    const size = `${isHorizontal ? 'inline' : 'block'}Size`;
     const tab = this.#listElement.querySelector<HTMLElement>(
       '[aria-selected="true"]',
     );
@@ -672,18 +693,15 @@ class TabsIndicator {
 
     const { x: tabX, y: tabY, width, height } = tab.getBoundingClientRect();
     const { x: listX, y: listY } = this.#listElement.getBoundingClientRect();
-    this.#animation = this.#indicatorElement.animate(
+    const { duration, easing } = this.#settings.animation.indicator;
+    this.#animation = this.#rootElement.animate(
       {
-        [position]: `${horizontal ? tabX - listX : tabY - listY}px`,
-        [size]: `${horizontal ? width : height}px`,
+        [position]: `${isHorizontal ? tabX - listX : tabY - listY}px`,
+        [size]: `${isHorizontal ? width : height}px`,
       },
-      {
-        duration: this.#settings.animation.indicator.duration,
-        easing: this.#settings.animation.indicator.easing,
-        fill: 'forwards',
-      },
+      { duration, easing, fill: 'forwards' },
     );
-  }
+  };
 
   async destroy(force = false) {
     this.#resizeObserver?.disconnect();
@@ -703,6 +721,7 @@ class TabsIndicator {
 
     this.#animation.cancel();
     this.#animation = null;
+    this.#listElement = null;
   }
 }
 
@@ -724,18 +743,16 @@ function getActiveElement() {
   return current;
 }
 
-function hasFocusable(element: HTMLElement) {
+function getAriaControlsIds(element: HTMLElement) {
+  return element.getAttribute('aria-controls')?.trim().split(/\s+/) ?? [];
+}
+
+function hasFocusable(container: HTMLElement) {
   return !![
-    ...element.querySelectorAll<HTMLElement>(
+    ...container.querySelectorAll<HTMLElement>(
       `:is(a[href], area[href], button, embed, iframe, input:not([type="hidden" i]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false" i]), [controls], [tabindex]):not(:disabled, [hidden], [inert], [tabindex="-1"])`,
     ),
-  ].filter((element) =>
-    element.checkVisibility({
-      contentVisibilityAuto: true,
-      opacityProperty: true,
-      visibilityProperty: true,
-    }),
-  ).length;
+  ].filter((element) => element.checkVisibility()).length;
 }
 
 function isFocusable(element: HTMLElement) {
