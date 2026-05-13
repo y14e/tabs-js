@@ -503,21 +503,6 @@ export default class Tabs {
     this.#rootElement.setAttribute('data-tabs-initialized', '');
   }
 
-  #onPanelAnimationsFinish = () => {
-    if (!this.#contentElement) {
-      return;
-    }
-
-    const { style } = this.#contentElement;
-    style.removeProperty('block-size');
-    style.removeProperty('overflow');
-    style.removeProperty('position');
-
-    this.#panelElements.forEach((panel) => {
-      this.#removePanelStyles(panel);
-    });
-  };
-
   #onTabClick = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -634,6 +619,18 @@ export default class Tabs {
       this.#tabElements.indexOf(tab) >= this.#panelElements.length
     );
   }
+
+  #onPanelAnimationsFinish = () => {
+    if (!this.#contentElement) {
+      return;
+    }
+
+    const { style } = this.#contentElement;
+    style.removeProperty('block-size');
+    style.removeProperty('overflow');
+    style.removeProperty('position');
+    this.#panelElements.forEach(this.#removePanelStyles);
+  };
 
   #removePanelStyles(panel: HTMLElement) {
     const { style } = panel;
