@@ -277,15 +277,26 @@ export default class Tabs {
       },
     );
 
-    const cleanupContentAnimation = () => {
+    const cleanup = () => {
       this.#animation = null;
     };
 
     const { signal } = this.#animationController ?? new AbortController();
-    this.#animation.addEventListener('cancel', cleanupContentAnimation, {
+    this.#animation.addEventListener('cancel', cleanup, {
       once: true,
       signal,
     });
+    this.#animation.addEventListener(
+      'finish',
+      () => {
+        this.#onContentAnimationFinish();
+        cleanup();
+      },
+      {
+        once: true,
+        signal,
+      },
+    );
 
     // panel
     this.#panelElements.forEach((panel) => {
@@ -318,44 +329,16 @@ export default class Tabs {
       );
       binding.animation = animation;
 
-      const cleanupPanelAnimation = () => {
+      const cleanup = () => {
         if (binding.animation === animation) {
           binding.animation = null;
         }
       };
 
       const { signal } = this.#animationController ?? new AbortController();
-      animation.addEventListener('cancel', cleanupPanelAnimation, {
-        once: true,
-        signal,
-      });
-
-      animation.addEventListener(
-        'finish',
-        () => {
-          cleanupPanelAnimation();
-          this.#removePanelStyles(panel);
-        },
-        { once: true, signal },
-      );
+      animation.addEventListener('cancel', cleanup, { once: true, signal });
+      animation.addEventListener('finish', cleanup, { once: true, signal });
     });
-
-    const promises: Promise<void>[] = [];
-
-    this.#panelElements.forEach((panel) => {
-      const animation = this.#bindings.get(panel)?.animation;
-
-      if (animation) {
-        promises.push(waitAnimation(animation));
-      }
-    });
-
-    await Promise.allSettled(promises);
-
-    // finish panel animations
-    cleanupContentAnimation();
-    this.#onPanelAnimationsFinish();
-    this.#rootElement.removeAttribute('data-tabs-animating');
   }
 
   async destroy(force = false) {
@@ -399,7 +382,7 @@ export default class Tabs {
       }
     });
 
-    this.#onPanelAnimationsFinish();
+    this.#onContentAnimationFinish();
     this.#animationController?.abort();
     this.#animationController = null;
     this.#listElements.length = 0;
@@ -613,14 +596,7 @@ export default class Tabs {
     this.activate(tab, true);
   };
 
-  #isAvoidedTab(tab: HTMLElement) {
-    return (
-      this.#settings.avoidDuplicates &&
-      this.#tabElements.indexOf(tab) >= this.#panelElements.length
-    );
-  }
-
-  #onPanelAnimationsFinish = () => {
+  #onContentAnimationFinish() {
     if (!this.#contentElement) {
       return;
     }
@@ -629,16 +605,24 @@ export default class Tabs {
     style.removeProperty('block-size');
     style.removeProperty('overflow');
     style.removeProperty('position');
-    this.#panelElements.forEach(this.#removePanelStyles);
-  };
 
-  #removePanelStyles(panel: HTMLElement) {
-    const { style } = panel;
-    style.removeProperty('content-visibility');
-    style.removeProperty('display');
-    style.removeProperty('inline-size');
-    style.removeProperty('opacity');
-    style.removeProperty('position');
+    this.#panelElements.forEach((panel) => {
+      const { style } = panel;
+      style.removeProperty('content-visibility');
+      style.removeProperty('display');
+      style.removeProperty('inline-size');
+      style.removeProperty('opacity');
+      style.removeProperty('position');
+    });
+
+    this.#rootElement.removeAttribute('data-tabs-animating');
+  }
+
+  #isAvoidedTab(tab: HTMLElement) {
+    return (
+      this.#settings.avoidDuplicates &&
+      this.#tabElements.indexOf(tab) >= this.#panelElements.length
+    );
   }
 }
 
@@ -754,16 +738,4 @@ function hasFocusable(container: HTMLElement) {
 
 function isFocusable(element: HTMLElement) {
   return !element.hasAttribute('disabled');
-}
-
-function waitAnimation(animation: Animation) {
-  const { playState } = animation;
-
-  if (playState === 'idle' || playState === 'finished') {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve) =>
-    animation.addEventListener('finish', () => resolve(), { once: true }),
-  );
 }
