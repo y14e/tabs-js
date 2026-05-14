@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 1.3.0
+ * @version 1.3.1
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -166,8 +166,7 @@ export default class Tabs {
     const tabs: HTMLElement[][] = [];
 
     this.#tabElements.forEach((tab, i) => {
-      const index = i % this.#panelElements.length;
-
+      const index = i % length;
       const tabsByIndex = tabs[index] ?? [];
       tabsByIndex.push(tab);
       tabs[index] = tabsByIndex;
@@ -181,7 +180,7 @@ export default class Tabs {
       const binding = createBinding(tabsByIndex, panel);
       this.#bindings.set(tab, binding);
 
-      if (i < this.#panelElements.length) {
+      if (i < length) {
         this.#bindings.set(panel, binding);
       }
     });
