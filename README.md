@@ -47,7 +47,6 @@ interface TabsOptions {
 
 If `true`, only the first tab list remains interactive; subsequent duplicates are excluded from focus and navigation.
 
-
 ### ⚙️ Customize defaults
 
 Override the global default settings applied to all accordion instances.
