@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 1.0.1
+ * @version 1.1.0
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -176,6 +176,21 @@ export default class Tabs {
       console.warn('Missing panel elements');
       return;
     }
+
+    this.#tabElements.forEach((tab, i) => {
+      const panel = this.#panelElements[i % this.#panelElements.length];
+
+      if (!panel) {
+        return;
+      }
+
+      const binding = createBinding(tab, panel);
+      this.#bindings.set(tab, binding);
+
+      if (i < this.#panelElements.length) {
+        this.#bindings.set(panel, binding);
+      }
+    });
 
     this.#initialize();
   }
@@ -463,18 +478,6 @@ export default class Tabs {
       panel.addEventListener('beforematch', this.#onPanelBeforeMatch, {
         signal,
       });
-    });
-
-    this.#tabElements.forEach((tab, i) => {
-      const panel = this.#panelElements[i % this.#panelElements.length];
-
-      if (!panel) {
-        return;
-      }
-
-      const binding = createBinding(tab, panel);
-      this.#bindings.set(tab, binding);
-      this.#bindings.set(panel, binding);
     });
 
     this.#rootElement.setAttribute('data-tabs-initialized', '');
