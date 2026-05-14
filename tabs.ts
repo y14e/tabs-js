@@ -208,7 +208,7 @@ export default class Tabs {
       t.setAttribute('aria-selected', String(isSelected));
       t.setAttribute(
         'tabindex',
-        isSelected && !this.#isAvoidingTab(t) ? '0' : '-1',
+        isSelected && !this.#isAvoidanceTab(t) ? '0' : '-1',
       );
     });
 
@@ -423,16 +423,16 @@ export default class Tabs {
         tab.setAttribute('aria-selected', 'false');
       }
 
-      const isAvoiding = this.#isAvoidingTab(tab);
+      const isAvoidance = this.#isAvoidanceTab(tab);
 
-      if (!isAvoiding) {
+      if (!isAvoidance) {
         tab.id ||= `tabs-tab-${id}`;
       }
 
       tab.setAttribute('role', 'tab');
       tab.setAttribute(
         'tabindex',
-        tab.ariaSelected === 'true' && !isAvoiding ? '0' : '-1',
+        tab.ariaSelected === 'true' && !isAvoidance ? '0' : '-1',
       );
 
       if (!isFocusable(tab)) {
@@ -579,7 +579,7 @@ export default class Tabs {
     this.activate(tab, true);
   };
 
-  #isAvoidingTab(tab: HTMLElement) {
+  #isAvoidanceTab(tab: HTMLElement) {
     const binding = this.#bindings.get(tab);
 
     if (!binding) {
