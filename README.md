@@ -47,6 +47,27 @@ interface TabsOptions {
 
 If `true`, only the first tab list remains interactive; subsequent duplicates are excluded from focus and navigation.
 
+### ⚙️ Customize defaults
+
+Override the global default settings applied to all accordion instances.
+
+```ts
+import Tabs from './tabs';
+
+Tabs.defaults = {
+  animation: {
+    content: {
+      crossFade: false,
+      duration: 1000,
+      fade: true,
+    }
+  },
+  manual: true,
+};
+
+new Tabs(root);
+```
+
 ## 📦 APIs
 
 ### `activate`
