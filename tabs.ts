@@ -423,16 +423,16 @@ export default class Tabs {
         tab.setAttribute('aria-selected', 'false');
       }
 
-      const isAvoided = this.#isAvoidingTab(tab);
+      const isAvoiding = this.#isAvoidingTab(tab);
 
-      if (!isAvoided) {
+      if (!isAvoiding) {
         tab.id ||= `tabs-tab-${id}`;
       }
 
       tab.setAttribute('role', 'tab');
       tab.setAttribute(
         'tabindex',
-        tab.ariaSelected === 'true' && !isAvoided ? '0' : '-1',
+        tab.ariaSelected === 'true' && !isAvoiding ? '0' : '-1',
       );
 
       if (!isFocusable(tab)) {
