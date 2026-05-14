@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 1.2.0
+ * @version 1.3.0
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -203,18 +203,12 @@ export default class Tabs {
       return;
     }
 
-    const ids = getAriaControlsIds(tab);
-
-    if (!ids.length) {
-      return;
-    }
-
     this.#tabElements.forEach((t) => {
       const isSelected = this.#bindings.get(t)?.tabs.some((tt) => tt === tab);
       t.setAttribute('aria-selected', String(isSelected));
       t.setAttribute(
         'tabindex',
-        isSelected && !this.#isAvoidTab(t) ? '0' : '-1',
+        isSelected && !this.#isAvoidingTab(t) ? '0' : '-1',
       );
     });
 
@@ -229,28 +223,33 @@ export default class Tabs {
     style.setProperty('overflow', 'clip');
     style.setProperty('position', 'relative');
     const { fade, crossFade } = this.#settings.animation.content;
+    const panel = this.#bindings.get(tab)?.panel;
 
-    this.#panelElements.forEach((panel) => {
-      const { style } = panel;
+    if (!panel) {
+      return;
+    }
+
+    this.#panelElements.forEach((p) => {
+      const { style } = p;
       if (fade || crossFade) {
         style.setProperty('content-visibility', 'visible');
         style.setProperty('display', 'block');
-        style.setProperty('opacity', panel.hidden ? '0' : '1');
+        style.setProperty('opacity', p.hidden ? '0' : '1');
       }
 
       style.setProperty('inline-size', '100%');
       style.setProperty('position', 'absolute');
 
-      if (ids.includes(panel.id) && !hasFocusable(panel)) {
-        panel.setAttribute('tabindex', '0');
+      if (p === panel && !hasFocusable(p)) {
+        p.setAttribute('tabindex', '0');
       } else {
-        panel.removeAttribute('tabindex');
+        p.removeAttribute('tabindex');
       }
     });
 
-    this.#panelElements.forEach((panel, i) => {
-      if (ids.includes(panel.id)) {
-        panel.removeAttribute('hidden');
+    this.#panelElements.forEach((p, i) => {
+      if (p === panel) {
+        p.removeAttribute('hidden');
       } else {
         const tab = this.#tabElements[i];
 
@@ -258,16 +257,11 @@ export default class Tabs {
           return;
         }
 
-        panel.setAttribute('hidden', isFocusable(tab) ? 'until-found' : '');
+        p.setAttribute('hidden', isFocusable(tab) ? 'until-found' : '');
       }
     });
 
     this.#animation?.cancel();
-    const newPanel = this.#bindings.get(tab)?.panel;
-
-    if (!newPanel) {
-      return;
-    }
 
     // content
     const { duration, easing } = this.#settings.animation.content;
@@ -275,7 +269,7 @@ export default class Tabs {
       {
         blockSize: [
           `${size}px`,
-          getComputedStyle(newPanel).getPropertyValue('block-size'),
+          getComputedStyle(panel).getPropertyValue('block-size'),
         ],
       },
       {
@@ -306,17 +300,17 @@ export default class Tabs {
     );
 
     // panel
-    this.#panelElements.forEach((panel) => {
-      const binding = this.#bindings.get(panel);
+    this.#panelElements.forEach((p) => {
+      const binding = this.#bindings.get(p);
 
       if (!binding) {
         return;
       }
 
-      const opacity = getComputedStyle(panel).getPropertyValue('opacity');
+      const opacity = getComputedStyle(p).getPropertyValue('opacity');
       binding.animation?.cancel();
-      const isSelected = ids.includes(panel.id);
-      const animation = panel.animate(
+      const isSelected = p === panel;
+      const animation = p.animate(
         {
           opacity: fade
             ? isSelected
@@ -429,7 +423,7 @@ export default class Tabs {
         tab.setAttribute('aria-selected', 'false');
       }
 
-      const isAvoided = this.#isAvoidTab(tab);
+      const isAvoided = this.#isAvoidingTab(tab);
 
       if (!isAvoided) {
         tab.id ||= `tabs-tab-${id}`;
@@ -585,7 +579,7 @@ export default class Tabs {
     this.activate(tab, true);
   };
 
-  #isAvoidTab(tab: HTMLElement) {
+  #isAvoidingTab(tab: HTMLElement) {
     const binding = this.#bindings.get(tab);
 
     if (!binding) {
@@ -747,10 +741,6 @@ function getActiveElement() {
   }
 
   return current;
-}
-
-function getAriaControlsIds(element: HTMLElement) {
-  return element.getAttribute('aria-controls')?.trim().split(/\s+/) ?? [];
 }
 
 function hasFocusable(container: HTMLElement) {
