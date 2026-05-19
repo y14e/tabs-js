@@ -1,7 +1,7 @@
 /**
  * tabs.ts
  *
- * @version 1.3.2
+ * @version 1.3.3
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -58,7 +58,7 @@ type Binding = {
 export default class Tabs {
   static defaults: TabsOptions = {};
 
-  #rootElement: HTMLElement;
+  #rootElement!: HTMLElement;
   #defaults = {
     animation: {
       content: {
@@ -83,8 +83,8 @@ export default class Tabs {
     },
     vertical: false,
   };
-  #settings: DeepRequired<TabsOptions>;
-  #listElements: HTMLElement[];
+  #settings!: DeepRequired<TabsOptions>;
+  #listElements!: HTMLElement[];
   #tabElements!: HTMLElement[];
   #indicatorElements!: HTMLElement[];
   #contentElement!: HTMLElement | null;
@@ -99,6 +99,11 @@ export default class Tabs {
   constructor(root: HTMLElement, options: TabsOptions = {}) {
     if (!(root instanceof HTMLElement)) {
       throw new TypeError('Invalid root element');
+    }
+
+    if (root.hasAttribute('data-tabs-initialized')) {
+      console.warn('Already initialized');
+      return;
     }
 
     this.#rootElement = root;
