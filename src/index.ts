@@ -1,11 +1,12 @@
 /**
- * tabs.ts
+ * Tabs
+ * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
  * @version 1.3.3
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
- * @see {@link https://github.com/y14e/tabs-ts}
+ * @see {@link https://github.com/y14e/tabs}
  */
 
 // -----------------------------------------------------------------------------
