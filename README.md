@@ -1,12 +1,28 @@
-# tabs.ts
+# Tabs
 
 WAI-ARIA compliant [tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) pattern implementation in TypeScript.
+
+## Install
+
+```bash
+npm i @y14e/tabs
+```
+
+```ts
+// npm
+import Tabs from '@y14e/tabs';
+
+// CDNs
+import Tabs from 'https://esm.sh/@y14e/tabs'
+// or
+import Tabs from 'https://cdn.jsdelivr.net/npm/@y14e/tabs/+esm';
+// or
+import Tabs from 'https://unpkg.com/@y14e/tabs/dist/index.js';
+```
 
 ## Usage
 
 ```ts
-import Tabs from './tabs';
-
 new Tabs(root, options);
 // => Tabs
 //
@@ -52,7 +68,7 @@ If `true`, only the first tab list remains interactive; subsequent duplicates ar
 Override the global default settings applied to all accordion instances.
 
 ```ts
-import Tabs from './tabs';
+import Tabs from '@y14e/tabs';
 
 Tabs.defaults = {
   animation: {
@@ -92,4 +108,4 @@ tabs.destroy(force);
 
 ## Demo
 
-https://y14e.github.io/tabs-ts/
+https://y14e.github.io/tabs/
