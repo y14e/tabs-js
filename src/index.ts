@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.4
+ * @version 1.3.5
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -515,6 +515,12 @@ export default class Tabs {
   };
 
   #onTabKeyDown = (event: KeyboardEvent): void => {
+    const { key, altKey, ctrlKey, metaKey, shiftKey } = event;
+
+    if (altKey || ctrlKey || metaKey || shiftKey) {
+      return;
+    }
+
     const currentTab = event.currentTarget;
 
     if (!(currentTab instanceof HTMLElement)) {
@@ -529,7 +535,6 @@ export default class Tabs {
 
     const isBoth = list.ariaOrientation === 'undefined';
     const isHorizontal = list.ariaOrientation !== 'vertical';
-    const { key } = event;
 
     if (
       ![
