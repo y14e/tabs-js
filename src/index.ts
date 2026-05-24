@@ -2,12 +2,23 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.3
+ * @version 1.3.4
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
  * @see {@link https://github.com/y14e/tabs}
  */
+
+// -----------------------------------------------------------------------------
+// import
+// -----------------------------------------------------------------------------
+
+import {
+  addTokenToAttribute,
+  restoreAttributes,
+  saveAttributes,
+} from '@y14e/attributes-utils';
+import type { DeepRequired } from 'utility-types';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -37,14 +48,6 @@ export interface TabsOptions {
   };
   readonly vertical?: boolean;
 }
-
-type DeepRequired<T> = T extends (...args: unknown[]) => unknown
-  ? T
-  : T extends readonly unknown[]
-    ? T
-    : T extends object
-      ? { [K in keyof T]-?: DeepRequired<NonNullable<T[K]>> }
-      : NonNullable<T>;
 
 type Binding = {
   tabs: HTMLElement[];
@@ -194,7 +197,7 @@ export default class Tabs {
     this.#initialize();
   }
 
-  async activate(tab: HTMLElement, isMatch = false) {
+  activate(tab: HTMLElement, isMatch = false): void {
     if (this.#isDestroyed) {
       return;
     }
@@ -283,7 +286,7 @@ export default class Tabs {
       },
     );
 
-    const cleanup = () => {
+    const cleanup = (): void => {
       this.#animation = null;
     };
 
@@ -336,7 +339,7 @@ export default class Tabs {
       );
       binding.animation = animation;
 
-      const cleanup = () => {
+      const cleanup = (): void => {
         if (binding.animation === animation) {
           binding.animation = null;
         }
@@ -349,7 +352,7 @@ export default class Tabs {
     });
   }
 
-  async destroy(force = false) {
+  async destroy(force = false): Promise<void> {
     if (this.#isDestroyed) {
       return;
     }
@@ -393,6 +396,11 @@ export default class Tabs {
     this.#onAnimationFinish();
     this.#animationController?.abort();
     this.#animationController = null;
+    restoreAttributes([
+      ...this.#listElements,
+      ...this.#tabElements,
+      ...this.#panelElements,
+    ]);
     this.#listElements.length = 0;
     this.#tabElements.length = 0;
     this.#contentElement = null;
@@ -400,8 +408,13 @@ export default class Tabs {
     this.#rootElement.removeAttribute('data-tabs-initialized');
   }
 
-  #initialize() {
+  #initialize(): void {
     const { signal } = this.#eventController ?? new AbortController();
+    saveAttributes(this.#listElements, [
+      'aria-hidden',
+      'aria-orientation',
+      'role',
+    ]);
 
     this.#listElements.forEach((list, i) => {
       if (this.#settings.avoidDuplicates && i) {
@@ -415,12 +428,26 @@ export default class Tabs {
       list.setAttribute('role', 'tablist');
     });
 
+    saveAttributes(this.#tabElements, [
+      'aria-controls',
+      'id',
+      'role',
+      'tabindex',
+    ]);
+
     this.#tabElements.forEach((tab, i) => {
       const id = Math.random().toString(36).slice(-8);
       const panel = this.#panelElements[i % this.#panelElements.length];
 
       if (!panel) {
         return;
+      }
+
+      if (i < this.#panelElements.length) {
+        saveAttributes(
+          [panel],
+          ['aria-controls', 'aria-labelledby', 'id', 'role', 'tabindex'],
+        );
       }
 
       panel.id ||= `tabs-panel-${id}`;
@@ -476,9 +503,8 @@ export default class Tabs {
     this.#rootElement.setAttribute('data-tabs-initialized', '');
   }
 
-  #onTabClick = (event: MouseEvent) => {
+  #onTabClick = (event: MouseEvent): void => {
     event.preventDefault();
-    event.stopPropagation();
     const tab = event.currentTarget;
 
     if (!(tab instanceof HTMLElement)) {
@@ -488,7 +514,7 @@ export default class Tabs {
     this.activate(tab);
   };
 
-  #onTabKeyDown = (event: KeyboardEvent) => {
+  #onTabKeyDown = (event: KeyboardEvent): void => {
     const currentTab = event.currentTarget;
 
     if (!(currentTab instanceof HTMLElement)) {
@@ -522,8 +548,6 @@ export default class Tabs {
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
     const focusables = [
       ...list.querySelectorAll<HTMLElement>(this.#settings.selector.tab),
     ].filter(isFocusable);
@@ -533,6 +557,7 @@ export default class Tabs {
       return;
     }
 
+    event.preventDefault();
     const currentIndex = focusables.indexOf(active);
     let newIndex = currentIndex;
 
@@ -570,7 +595,7 @@ export default class Tabs {
     }
   };
 
-  #onPanelBeforeMatch = (event: Event) => {
+  #onPanelBeforeMatch = (event: Event): void => {
     const panel = event.currentTarget;
 
     if (!(panel instanceof HTMLElement)) {
@@ -586,7 +611,7 @@ export default class Tabs {
     this.activate(tab, true);
   };
 
-  #isAvoidedTab(tab: HTMLElement) {
+  #isAvoidedTab(tab: HTMLElement): boolean {
     const binding = this.#bindings.get(tab);
 
     if (!binding) {
@@ -596,7 +621,10 @@ export default class Tabs {
     return this.#settings.avoidDuplicates && binding.tabs.indexOf(tab) > 0;
   }
 
-  #mergeOptions(target: DeepRequired<TabsOptions>, source: TabsOptions) {
+  #mergeOptions(
+    target: DeepRequired<TabsOptions>,
+    source: TabsOptions,
+  ): DeepRequired<TabsOptions> {
     return {
       ...target,
       ...source,
@@ -617,7 +645,7 @@ export default class Tabs {
     };
   }
 
-  #onAnimationFinish() {
+  #onAnimationFinish(): void {
     if (!this.#contentElement) {
       return;
     }
@@ -666,7 +694,7 @@ class TabsIndicator {
     });
   }
 
-  #update = () => {
+  #update = (): void => {
     if (!this.#rootElement.checkVisibility()) {
       return;
     }
@@ -698,7 +726,7 @@ class TabsIndicator {
     );
   };
 
-  async destroy(force = false) {
+  async destroy(force = false): Promise<void> {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
     this.#mutationObserver?.disconnect();
@@ -724,23 +752,11 @@ class TabsIndicator {
 // Utils
 // -----------------------------------------------------------------------------
 
-function addTokenToAttribute(
-  element: HTMLElement,
-  attribute: string,
-  token: string,
-) {
-  const tokens = new Set(
-    element.getAttribute(attribute)?.trim().split(/\s+/) ?? [],
-  );
-  tokens.add(token);
-  element.setAttribute(attribute, [...tokens].join(' '));
-}
-
-function createBinding(tabs: HTMLElement[], panel: HTMLElement) {
+function createBinding(tabs: HTMLElement[], panel: HTMLElement): Binding {
   return { tabs, panel, animation: null };
 }
 
-function getActiveElement() {
+function getActiveElement(): Element | null {
   let current = document.activeElement;
 
   while (current?.shadowRoot?.activeElement) {
@@ -750,7 +766,7 @@ function getActiveElement() {
   return current;
 }
 
-function hasFocusable(container: HTMLElement) {
+function hasFocusable(container: HTMLElement): boolean {
   return !![
     ...container.querySelectorAll<HTMLElement>(
       `:is(a[href], area[href], button, embed, iframe, input:not([type="hidden" i]), object, select, details > summary:first-of-type, textarea, [contenteditable]:not([contenteditable="false" i]), [controls], [tabindex]):not(:disabled, [hidden], [inert], [tabindex="-1"])`,
@@ -758,6 +774,6 @@ function hasFocusable(container: HTMLElement) {
   ].filter((element) => element.checkVisibility()).length;
 }
 
-function isFocusable(element: HTMLElement) {
+function isFocusable(element: HTMLElement): boolean {
   return !element.hasAttribute('disabled');
 }
