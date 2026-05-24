@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.5
+ * @version 1.3.6
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -409,7 +409,8 @@ export default class Tabs {
   }
 
   #initialize(): void {
-    const { signal } = this.#eventController ?? new AbortController();
+    this.#eventController = new AbortController();
+    const { signal } = this.#eventController;
     saveAttributes(this.#listElements, [
       'aria-hidden',
       'aria-orientation',
