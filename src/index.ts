@@ -477,7 +477,7 @@ export default class Tabs {
 
       addTokenToAttribute(panel, 'aria-labelledby', tab.id);
       tab.addEventListener('click', this.#onTabClick, { signal });
-      tab.addEventListener('focus', this.#onTabFocus, { signal });
+      tab.addEventListener('focusin', this.#onTabFocusIn, { signal });
       tab.addEventListener('keydown', this.#onTabKeyDown, { signal });
     });
 
@@ -517,7 +517,7 @@ export default class Tabs {
     this.activate(tab);
   };
 
-  #onTabFocus = (event: FocusEvent): void => {
+  #onTabFocusIn = (event: FocusEvent): void => {
     const tab = event.currentTarget;
 
     if (!(tab instanceof HTMLElement)) {
@@ -526,7 +526,10 @@ export default class Tabs {
 
     if (this.#isAvoidedTab(tab)) {
       const active = getActiveElement();
-      active && 'blur' in active && typeof active.blur === 'function' && active.blur();
+      active &&
+        'blur' in active &&
+        typeof active.blur === 'function' &&
+        active.blur();
     }
   };
 
