@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.7
+ * @version 1.3.8
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -477,6 +477,7 @@ export default class Tabs {
 
       addTokenToAttribute(panel, 'aria-labelledby', tab.id);
       tab.addEventListener('click', this.#onTabClick, { signal });
+      tab.addEventListener('focus', this.#onTabFocus, { signal });
       tab.addEventListener('keydown', this.#onTabKeyDown, { signal });
     });
 
@@ -514,6 +515,19 @@ export default class Tabs {
     }
 
     this.activate(tab);
+  };
+
+  #onTabFocus = (event: FocusEvent): void => {
+    const tab = event.currentTarget;
+
+    if (!(tab instanceof HTMLElement)) {
+      return;
+    }
+
+    if (this.#isAvoidedTab(tab)) {
+      const active = getActiveElement();
+      active && 'blur' in active && typeof active.blur === 'function' && active.blur();
+    }
   };
 
   #onTabKeyDown = (event: KeyboardEvent): void => {
