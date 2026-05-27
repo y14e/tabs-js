@@ -179,7 +179,6 @@ export default class Tabs {
       const tabsByIndex = tabs[index] ?? [];
       tabsByIndex.push(tab);
       tabs[index] = tabsByIndex;
-
       const panel = this.#panelElements[index];
 
       if (!panel) {
