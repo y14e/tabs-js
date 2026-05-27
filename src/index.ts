@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.11
+ * @version 1.3.12
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -113,14 +113,11 @@ export default class Tabs {
     this.#rootElement = root;
     this.#defaults = this.#mergeOptions(this.#defaults, Tabs.defaults);
     this.#settings = this.#mergeOptions(this.#defaults, options);
-
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    matchMedia('(prefers-reduced-motion: reduce)').matches &&
       Object.assign(this.#settings.animation, {
         content: { duration: 0 },
         indicator: { duration: 0 },
       });
-    }
-
     const NOT_NESTED = `:not(:scope ${this.#settings.selector.panel} *)`;
     this.#listElements = [
       ...this.#rootElement.querySelectorAll<HTMLElement>(
@@ -187,10 +184,7 @@ export default class Tabs {
 
       const binding = createBinding(tabsByIndex, panel);
       this.#bindings.set(tab, binding);
-
-      if (i < length) {
-        this.#bindings.set(panel, binding);
-      }
+      i < length && this.#bindings.set(panel, binding);
     });
 
     this.#initialize();
@@ -246,12 +240,9 @@ export default class Tabs {
 
       style.setProperty('inline-size', '100%');
       style.setProperty('position', 'absolute');
-
-      if (p === panel && !hasFocusable(p)) {
-        p.setAttribute('tabindex', '0');
-      } else {
-        p.removeAttribute('tabindex');
-      }
+      p === panel && !hasFocusable(p)
+        ? p.setAttribute('tabindex', '0')
+        : p.removeAttribute('tabindex');
     });
 
     this.#panelElements.forEach((p, i) => {
@@ -420,14 +411,11 @@ export default class Tabs {
     ]);
 
     this.#listElements.forEach((list, i) => {
-      if (this.#settings.avoidDuplicates && i) {
+      this.#settings.avoidDuplicates &&
+        i &&
         list.setAttribute('aria-hidden', 'true');
-      }
-
-      if (this.#settings.vertical) {
+      this.#settings.vertical &&
         list.setAttribute('aria-orientation', 'vertical');
-      }
-
       list.setAttribute('role', 'tablist');
     });
 
@@ -447,20 +435,15 @@ export default class Tabs {
         return;
       }
 
-      if (i < this.#panelElements.length) {
+      i < this.#panelElements.length &&
         saveAttributes(
           [panel],
           ['aria-controls', 'aria-labelledby', 'id', 'role', 'tabindex'],
         );
-      }
-
       panel.id ||= `tabs-panel-${id}`;
       addTokenToAttribute(tab, 'aria-controls', panel.id);
-
-      if (!tab.hasAttribute('aria-selected')) {
+      !tab.hasAttribute('aria-selected') &&
         tab.setAttribute('aria-selected', 'false');
-      }
-
       const isAvoided = this.#isAvoidedTab(tab);
 
       if (!isAvoided) {
@@ -472,11 +455,7 @@ export default class Tabs {
         'tabindex',
         tab.ariaSelected === 'true' && !isAvoided ? '0' : '-1',
       );
-
-      if (!isFocusable(tab)) {
-        tab.style.setProperty('pointer-events', 'none');
-      }
-
+      !isFocusable(tab) && tab.style.setProperty('pointer-events', 'none');
       addTokenToAttribute(panel, 'aria-labelledby', tab.id);
       tab.addEventListener('click', this.#onTabClick, { signal });
       tab.addEventListener('focus', this.#onTabFocus, { signal });
@@ -497,11 +476,9 @@ export default class Tabs {
 
     this.#panelElements.forEach((panel) => {
       panel.setAttribute('role', 'tabpanel');
-
-      if (!panel.hasAttribute('hidden') && !hasFocusable(panel)) {
+      !panel.hasAttribute('hidden') &&
+        !hasFocusable(panel) &&
         panel.setAttribute('tabindex', '0');
-      }
-
       panel.addEventListener('beforematch', this.#onPanelBeforeMatch, {
         signal,
       });
@@ -611,10 +588,7 @@ export default class Tabs {
     }
 
     newTab.focus();
-
-    if (!this.#settings.manual) {
-      newTab.click();
-    }
+    !this.#settings.manual && newTab.click();
   };
 
   #onPanelBeforeMatch = (event: Event): void => {
