@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.4.0
+ * @version 1.4.1
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -557,13 +557,7 @@ export default class Tabs {
     }
 
     event.preventDefault();
-
-    switch (key) {
-      case 'Enter':
-      case ' ':
-        active.click();
-        return;
-    }
+    active.click();
   };
 
   #onPanelBeforeMatch = (event: Event): void => {

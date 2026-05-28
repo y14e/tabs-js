@@ -1,6 +1,6 @@
 {
   "name": "@y14e/tabs",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "WAI-ARIA compliant tabs pattern implementation in TypeScript",
   "type": "module",
   "main": "./dist/index.cjs",
