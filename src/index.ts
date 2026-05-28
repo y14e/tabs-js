@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.3.12
+ * @version 1.4.0
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -18,6 +18,7 @@ import {
   restoreAttributes,
   saveAttributes,
 } from '@y14e/attributes-utils';
+import { createRovingTabIndex } from '@y14e/roving-tabindex';
 import type { DeepRequired } from 'utility-types';
 
 // -----------------------------------------------------------------------------
@@ -96,6 +97,7 @@ export default class Tabs {
   #bindings = new WeakMap<HTMLElement, Binding>();
   #eventController: AbortController | null = null;
   #animationController: AbortController | null = null;
+  #cleanupsRovingTabIndex: (() => void)[] = [];
   #animation: Animation | null = null;
   #indicators: TabsIndicator[] = [];
   #isDestroyed = false;
@@ -352,6 +354,12 @@ export default class Tabs {
     this.#eventController?.abort();
     this.#eventController = null;
 
+    this.#cleanupsRovingTabIndex.forEach((cleanup) => {
+      cleanup();
+    });
+
+    this.#cleanupsRovingTabIndex.length = 0;
+
     this.#indicators.forEach((indicator) => {
       indicator.destroy(force);
     });
@@ -451,10 +459,6 @@ export default class Tabs {
       }
 
       tab.setAttribute('role', 'tab');
-      tab.setAttribute(
-        'tabindex',
-        tab.ariaSelected === 'true' && !isAvoided ? '0' : '-1',
-      );
       !isFocusable(tab) && tab.style.setProperty('pointer-events', 'none');
       addTokenToAttribute(panel, 'aria-labelledby', tab.id);
       tab.addEventListener('click', this.#onTabClick, { signal });
@@ -484,6 +488,32 @@ export default class Tabs {
       });
     });
 
+    this.#listElements.forEach((list) => {
+      this.#cleanupsRovingTabIndex.push(
+        createRovingTabIndex(list, {
+          direction:
+            list.ariaOrientation === 'undefined'
+              ? undefined
+              : this.#settings.vertical
+                ? 'vertical'
+                : 'horizontal',
+          selector: this.#settings.selector.tab,
+          wrap: true,
+        }),
+      );
+
+      list
+        .querySelectorAll<HTMLElement>(this.#settings.selector.tab)
+        .forEach((tab) => {
+          tab.setAttribute(
+            'tabindex',
+            tab.ariaSelected === 'true' && !this.#isAvoidedTab(tab)
+              ? '0'
+              : '-1',
+          );
+        });
+    });
+
     this.#rootElement.setAttribute('data-tabs-initialized', '');
   }
 
@@ -505,6 +535,7 @@ export default class Tabs {
       return;
     }
 
+    !this.#settings.manual && tab.click();
     this.#isAvoidedTab(tab) && tab.blur();
   };
 
@@ -515,41 +546,10 @@ export default class Tabs {
       return;
     }
 
-    const currentTab = event.currentTarget;
-
-    if (!(currentTab instanceof HTMLElement)) {
+    if (!['Enter', ' '].includes(key)) {
       return;
     }
 
-    const list = currentTab.closest(this.#settings.selector.list);
-
-    if (!list) {
-      return;
-    }
-
-    const isBoth = list.ariaOrientation === 'undefined';
-    const isHorizontal = list.ariaOrientation !== 'vertical';
-
-    if (
-      ![
-        'Enter',
-        ' ',
-        'End',
-        'Home',
-        ...(isBoth
-          ? ['ArrowLeft', 'ArrowUp']
-          : [`Arrow${isHorizontal ? 'Left' : 'Up'}`]),
-        ...(isBoth
-          ? ['ArrowRight', 'ArrowDown']
-          : [`Arrow${isHorizontal ? 'Right' : 'Down'}`]),
-      ].includes(key)
-    ) {
-      return;
-    }
-
-    const focusables = [
-      ...list.querySelectorAll<HTMLElement>(this.#settings.selector.tab),
-    ].filter(isFocusable);
     const active = getActiveElement();
 
     if (!(active instanceof HTMLElement)) {
@@ -557,38 +557,13 @@ export default class Tabs {
     }
 
     event.preventDefault();
-    const currentIndex = focusables.indexOf(active);
-    let newIndex = currentIndex;
 
     switch (key) {
       case 'Enter':
       case ' ':
         active.click();
         return;
-      case 'End':
-        newIndex = -1;
-        break;
-      case 'Home':
-        newIndex = 0;
-        break;
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        newIndex = currentIndex - 1;
-        break;
-      case 'ArrowRight':
-      case 'ArrowDown':
-        newIndex = (currentIndex + 1) % focusables.length;
-        break;
     }
-
-    const newTab = focusables.at(newIndex);
-
-    if (!newTab) {
-      return;
-    }
-
-    newTab.focus();
-    !this.#settings.manual && newTab.click();
   };
 
   #onPanelBeforeMatch = (event: Event): void => {
