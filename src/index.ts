@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.4.1
+ * @version 1.5.0
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -18,6 +18,7 @@ import {
   restoreAttributes,
   saveAttributes,
 } from '@y14e/attributes-utils';
+import Button from '@y14e/button';
 import { createRovingTabIndex } from '@y14e/roving-tabindex';
 import type { DeepRequired } from 'utility-types';
 
@@ -99,6 +100,7 @@ export default class Tabs {
   #animationController: AbortController | null = null;
   #cleanupsRovingTabIndex: (() => void)[] = [];
   #animation: Animation | null = null;
+  #buttons: Button[] = [];
   #indicators: TabsIndicator[] = [];
   #isDestroyed = false;
 
@@ -360,6 +362,12 @@ export default class Tabs {
 
     this.#cleanupsRovingTabIndex.length = 0;
 
+    this.#buttons.forEach((button) => {
+      button.destroy();
+    });
+
+    this.#buttons.length = 0;
+
     this.#indicators.forEach((indicator) => {
       indicator.destroy(force);
     });
@@ -463,7 +471,7 @@ export default class Tabs {
       addTokenToAttribute(panel, 'aria-labelledby', tab.id);
       tab.addEventListener('click', this.#onTabClick, { signal });
       tab.addEventListener('focus', this.#onTabFocus, { signal });
-      tab.addEventListener('keydown', this.#onTabKeyDown, { signal });
+      this.#buttons.push(new Button(tab));
     });
 
     saveAttributes(this.#indicatorElements, ['style']);
@@ -537,27 +545,6 @@ export default class Tabs {
 
     !this.#settings.manual && tab.click();
     this.#isAvoidedTab(tab) && tab.blur();
-  };
-
-  #onTabKeyDown = (event: KeyboardEvent): void => {
-    const { key, altKey, ctrlKey, metaKey, shiftKey } = event;
-
-    if (altKey || ctrlKey || metaKey || shiftKey) {
-      return;
-    }
-
-    if (!['Enter', ' '].includes(key)) {
-      return;
-    }
-
-    const active = getActiveElement();
-
-    if (!(active instanceof HTMLElement)) {
-      return;
-    }
-
-    event.preventDefault();
-    active.click();
   };
 
   #onPanelBeforeMatch = (event: Event): void => {
@@ -719,16 +706,6 @@ class TabsIndicator {
 
 function createBinding(tabs: HTMLElement[], panel: HTMLElement): Binding {
   return { tabs, panel, animation: null };
-}
-
-function getActiveElement(): Element | null {
-  let current = document.activeElement;
-
-  while (current?.shadowRoot?.activeElement) {
-    current = current.shadowRoot.activeElement;
-  }
-
-  return current;
 }
 
 function hasFocusable(container: HTMLElement): boolean {
