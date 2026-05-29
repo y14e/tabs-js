@@ -2,7 +2,7 @@
  * Tabs
  * WAI-ARIA compliant tabs pattern implementation in TypeScript.
  *
- * @version 1.5.0
+ * @version 1.5.1
  * @author Yusuke Kamiyamane
  * @license MIT
  * @copyright Copyright (c) Yusuke Kamiyamane
@@ -506,6 +506,7 @@ export default class Tabs {
                 ? 'vertical'
                 : 'horizontal',
           selector: this.#settings.selector.tab,
+          skipVisibilityCheck: true,
           wrap: true,
         }),
       );
