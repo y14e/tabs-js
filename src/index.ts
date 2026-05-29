@@ -506,7 +506,6 @@ export default class Tabs {
                 ? 'vertical'
                 : 'horizontal',
           selector: this.#settings.selector.tab,
-          skipVisibilityCheck: true,
           wrap: true,
         }),
       );
